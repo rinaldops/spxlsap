@@ -9,7 +9,11 @@ SPXLSAP
 ## 1. Visão Geral
 
 ### 1.1 Propósito do framework
-O SPXLSAP Tool é um framework de automação em VBA que conecta dados corporativos e transações SAP a partir de um único ponto de controle. Ele combina três pilares: (i) execução de SQL padronizado sobre ListObjects e listas SharePoint via fwXLSPConn, fwXLConn, fwSPConn e fwHelpers; (ii) manipulação estruturada de tabelas Excel com fwXLTable; e (iii) automação assistida do SAP GUI através de fwSAPConn, fwGuiMainWindow, fwGuiMenu, fwGuiTree e fwGuiTableControl. Essa arquitetura permite criar pipelines que leem, transformam e sincronizam dados antes de disparar rotinas SAP, mantendo toda a lógica encapsulada no próprio Workbook.
+O SPXLSAP Tool é um framework de automação em VBA que conecta dados corporativos e transações SAP a partir de um único ponto de controle. Ele combina três pilares: 
+(i) execução de SQL padronizado sobre ListObjects e listas SharePoint via fwXLSPConn, fwXLConn, fwSPConn e fwHelpers; 
+(ii) manipulação estruturada de tabelas Excel com fwXLTable; e 
+(iii) automação assistida do SAP GUI através de fwSAPConn, fwGuiMainWindow, fwGuiMenu, fwGuiTree e fwGuiTableControl. 
+Essa arquitetura permite criar pipelines que leem, transformam e sincronizam dados antes de disparar rotinas SAP, mantendo toda a lógica encapsulada no próprio Workbook.
 
 ### 1.2 Camadas funcionais
 Orquestração SQL multiorigem. fwXLSPConn constrói dinamicamente o catálogo de ListObjects do ActiveWorkbook, mescla as fontes SharePoint recebidas por InitSP e decide, comando a comando, se o processamento ocorre localmente (fwXLConn) ou remotamente (fwSPConn), sempre apoiado pela camada de parsing de fwHelpers.
