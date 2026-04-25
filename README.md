@@ -1,8 +1,5 @@
-<<<<<<< HEAD
-# spxlsap
 SPXLSAP
 =======
-﻿# SPXLSAP Tool
 
 - Versão: 2.0
 - Data: 30/03/2026
