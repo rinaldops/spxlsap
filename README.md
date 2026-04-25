@@ -520,4 +520,4 @@ O SPXLSAP Tool unifica acesso a dados e automação SAP em uma única base VBA. 
 | `fwGuiTableControl.cls` | Abstrai controles do tipo tabela/ALV; provê rolagem, seleção e leitura de células para automações. |
 | `fwGuiTree.cls` | Manipula árvores SAP GUI; localiza nós, expande estruturas e interage com registros hierárquicos. |
 | `fwSapGuiApi.bas` | Declarações e helpers da API SAP GUI Scripting, facilitando chamadas late binding. |
-| `SPXLSAP Tool.docx` | Este documento consolida visão geral, arquitetura, comandos SQL e fluxos do framework. |
+| `README` | Este documento consolida visão geral, arquitetura, comandos SQL e fluxos do framework. |
