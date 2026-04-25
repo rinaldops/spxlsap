@@ -9,31 +9,51 @@ SPXLSAP
 ## 1. Visão Geral
 
 ### 1.1 Propósito do framework
+
 O SPXLSAP Tool é um framework de automação em VBA que conecta dados corporativos e transações SAP a partir de um único ponto de controle. Ele combina três pilares: 
+
 (i) execução de SQL padronizado sobre ListObjects e listas SharePoint via fwXLSPConn, fwXLConn, fwSPConn e fwHelpers; 
+
 (ii) manipulação estruturada de tabelas Excel com fwXLTable; e 
+
 (iii) automação assistida do SAP GUI através de fwSAPConn, fwGuiMainWindow, fwGuiMenu, fwGuiTree e fwGuiTableControl. 
+
 Essa arquitetura permite criar pipelines que leem, transformam e sincronizam dados antes de disparar rotinas SAP, mantendo toda a lógica encapsulada no próprio Workbook.
 
 ### 1.2 Camadas funcionais
+
 Orquestração SQL multiorigem. fwXLSPConn constrói dinamicamente o catálogo de ListObjects do ActiveWorkbook, mescla as fontes SharePoint recebidas por InitSP e decide, comando a comando, se o processamento ocorre localmente (fwXLConn) ou remotamente (fwSPConn), sempre apoiado pela camada de parsing de fwHelpers.
+
 Motor de tabelas Excel. fwXLTable expõe operações de navegação (firstRow, GoToNextRow, RangeRow), carga (XLLoadArray), ajustes estruturais (AddColumnByName, EnsureHelpers) e formatação orientada a processos (QtdVisibleRows, ToDateSAP), permitindo que ListObjects funcionem como buffers transacionais.
+
 Integração SAP GUI. fwSAPConn garante a abertura do SAP Logon, escolhe/constrói a conexão adequada e entrega um GuiSession pronto para uso. A camada de GUI wrappers encapsula interações complexas (menus dinâmicos, árvores técnicas, ALV grids) e padroniza o acesso a findById.
+
 Processos e utilitários. Módulos como modUCOrquestracao, modUCAuxiliarCore e modRibbon mostram exemplos de casos de uso, auxiliando na compreensão do funcionamento do framework em um cenário de automação de processos.
 
 ### 1.3 Funcionalidades-chave
+
 SQL único para múltiplas fontes. A pilha fwXLSPConn + fwHelpers interpreta SELECT/INSERT/UPDATE/DELETE, reescreve nomes físicos (RewriteDataSourceNames), aplica o dialeto ACE (SqlAlignToAce) e opera o fluxo Stage-Update-Sync descrito no item 4, garantindo consistência entre SharePoint e Excel.
+
 Catálogo dinâmico e parametrizável. CreateDynamifwXLTableCatalog descobre todas as tabelas locais, enquanto ParseSPInitParams interpreta parâmetros declarativos em trios (nome, siteURL, listID), reduzindo o boilerplate de configuração.
+
 Manipulação rica de ListObjects. Rotinas como XLLoadArray, RangeRow, QtdVisibleRows, AddColumnByName e ToDateSAP permitem popular tabelas, validar conteúdo, destacar linhas em processamento e ajustar formatos exigidos por integrações SAP sem escrever código repetitivo.
+
 Sincronização SharePoint dirigida por linha. Os fluxos de orquestração do módulo modUCOrquestracao demonstram o uso de RunQuery para atualização dos registros visíveis/selecionados, registrando o resultado na coluna OBSERVAÇÕES e mantendo feedback imediato ao usuário.
+
 Sessões SAP resilientes. EnsureSapLogonRunning, PickOrOpenConnection, EnsureWantedSession e PerformInteractiveLogon lidam com abertura de cliente, múltiplas janelas e recuperação após quedas, enquanto a Ribbon customizada exibe o estado da conexão em tempo real.
+
 Wrappers reutilizáveis de GUI. fwGuiMainWindow, fwGuiMenu, fwGuiTree e fwGuiTableControl encapsulam padrões comuns (busca híbrida por elementos, leitura de ALV, interação com menus contextuais), simplificando a escrita de rotinas SAP específicas como a existente em btnProcessar_Click.
 
 ### 1.4 Benefícios para automação
+
 Reduz o acoplamento entre fontes de dados ao expor um SQL único independente da origem física.
+
 Minimiza riscos operacionais com staging local, logs (TraceOn nas classes de dados e wrappers principais) e monitoramento automático da sessão SAP.
+
 Padroniza a experiência do desenvolvedor: um único catálogo, objetos de tabela navegáveis e wrappers GUI diminuem a curva de aprendizado.
+
 Facilita compliance (rótulos de confidencialidade, controle de acesso via SharePoint) sem inserir essas preocupações nos scripts de negócio.
+
 Permite evoluir o framework de forma incremental, pois novas integrações podem usar os mesmos conectores e helpers já consolidados.
 
 &nbsp;
