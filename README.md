@@ -509,15 +509,15 @@ O SPXLSAP Tool unifica acesso a dados e automação SAP em uma única base VBA. 
 
 | Arquivo | Descrição |
 |---|---|
-| `fwXLSPConn.cls` | Orquestrador central; combina o catálogo dinâmico de ListObjects com as listas SharePoint declaradas e executa o pipeline Stage-Update-Sync. |
-| `fwXLConn.cls` | Motor OLEDB para Excel; traduz SQL para o dialeto ACE, controla conexões ADO e retorna dados ou linhas afetadas. |
-| `fwSPConn.cls` | Conector SharePoint via ACE/WSS; mantém SiteURL/ListID, campo chave e executa DML diretamente nas listas. |
-| `fwXLTable.cls` | Wrapper de ListObjects; oferece navegação, carga de arrays, manipulação estrutural e utilitários como RangeRow e QtdVisibleRows. |
-| `fwHelpers.cls` | Biblioteca de suporte; faz parsing de SQL, reescreve nomes físicos, gera catálogos dinâmicos e monta relatórios de execução. |
-| `fwSAPConn.cls` | Abre e mantém sessões SAP GUI; garante scripting habilitado, escolhe conexões e retorna GuiSession pronto. |
-| `fwGuiMainWindow.cls` | Encapsula janelas SAP (wnd[n]); executa TCodes, envia VKeys e expõe buscas generalistas por controles. |
-| `fwGuiMenu.cls` | Wrapper de menus SAP; resolve itens por texto, navega em hierarquias e executa comandos contextuais. |
-| `fwGuiTableControl.cls` | Abstrai controles do tipo tabela/ALV; provê rolagem, seleção e leitura de células para automações. |
-| `fwGuiTree.cls` | Manipula árvores SAP GUI; localiza nós, expande estruturas e interage com registros hierárquicos. |
-| `fwSapGuiApi.bas` | Declarações e helpers da API SAP GUI Scripting, facilitando chamadas late binding. |
-| `README` | Este documento consolida visão geral, arquitetura, comandos SQL e fluxos do framework. |
+| `src/fwXLSPConn.cls` | Orquestrador central; combina o catálogo dinâmico de ListObjects com as listas SharePoint declaradas e executa o pipeline Stage-Update-Sync. |
+| `src/fwXLConn.cls` | Motor OLEDB para Excel; traduz SQL para o dialeto ACE, controla conexões ADO e retorna dados ou linhas afetadas. |
+| `src/fwSPConn.cls` | Conector SharePoint via ACE/WSS; mantém SiteURL/ListID, campo chave e executa DML diretamente nas listas. |
+| `src/fwXLTable.cls` | Wrapper de ListObjects; oferece navegação, carga de arrays, manipulação estrutural e utilitários como RangeRow e QtdVisibleRows. |
+| `src/fwHelpers.cls` | Biblioteca de suporte; faz parsing de SQL, reescreve nomes físicos, gera catálogos dinâmicos e monta relatórios de execução. |
+| `src/fwSAPConn.cls` | Abre e mantém sessões SAP GUI; garante scripting habilitado, escolhe conexões e retorna GuiSession pronto. |
+| `src/fwGuiMainWindow.cls` | Encapsula janelas SAP (wnd[n]); executa TCodes, envia VKeys e expõe buscas generalistas por controles. |
+| `src/fwGuiMenu.cls` | Wrapper de menus SAP; resolve itens por texto, navega em hierarquias e executa comandos contextuais. |
+| `src/fwGuiTableControl.cls` | Abstrai controles do tipo tabela/ALV; provê rolagem, seleção e leitura de células para automações. |
+| `src/fwGuiTree.cls` | Manipula árvores SAP GUI; localiza nós, expande estruturas e interage com registros hierárquicos. |
+| `src/fwSapGuiApi.bas` | Declarações e helpers da API SAP GUI Scripting, facilitando chamadas late binding. |
+| `README.md` | Este documento consolida visão geral, arquitetura, comandos SQL e fluxos do framework. |
