@@ -4,7 +4,7 @@ SPXLSAP
 - Versão: 1.0.0
 - Data: 30/03/2026
 
-&nbsp;
+<br>
 
 ## 1. Visão Geral
 
@@ -56,9 +56,9 @@ Facilita compliance (rótulos de confidencialidade, controle de acesso via Share
 
 Permite evoluir o framework de forma incremental, pois novas integrações podem usar os mesmos conectores e helpers já consolidados.
 
-&nbsp;
+<br>
 
-&nbsp;
+<br>
 
 ---
 
@@ -77,9 +77,9 @@ Lista/URL inválida. Revise pVariaveis e use orquestrador.InitSP Nome, URL, GUID
 Registro bloqueado. Macros PAGESP exibem “Usuário sem permissão” ou “Registro bloqueado” em OBSERVAÇÕES. Ajuste a coluna Acessos ou o Ponto Focal na tabela/SharePoint e reexecute o lote.
 Power Query não atualiza. Execute RefreshTablesInSequence para forçar QueryTable.Refresh, cheque credenciais armazenadas e monitore logs (TraceOn) para encontrar planilhas com falha.
 
-&nbsp;
+<br>
 
-&nbsp;
+<br>
 
 ---
 
@@ -104,9 +104,9 @@ Manutenção de contexto SAP. As rotinas de automação consultam pVariaveis, va
 ### 3.3 Ecossistema de dados e SAP
 O desenho modular permite misturar interações de dados (SQL, manipulação de ListObjects, atualizações SharePoint) com automações SAP no mesmo fluxo. Uma rotina pode extrair dados via RunQuery, pintá-los com fwXLTable para revisão humana, disparar transações SAP com fwGuiMainWindow.TCode e, ao final, sincronizar status no SharePoint — tudo sem sair do workbook.
 
-&nbsp;
+<br>
 
-&nbsp;
+<br>
 
 ---
 
@@ -236,9 +236,9 @@ Delegação. O SQL é enviado para fwSPConn.SPDeleteRowsByQuery.
 Iteração. Com a lista de IDs, abre-se uma conexão de escrita e executam-se DELETE simples por ID, atualizando a barra de progresso.
 - Retorno. Total de itens excluídos é devolvido ao usuário.
 
-&nbsp;
+<br>
 
-&nbsp;
+<br>
 
 ---
 
@@ -271,9 +271,9 @@ Reutilize instâncias de fwXLTable para navegar pelas linhas a processar nos flu
 Mantenha TraceOn apenas durante diagnóstico; em produção use os retornos execReport e OBSERVAÇÕES nas tabelas.
 Antes de automações SAP, invoque initSAP (ou fwSAPConn.Connect) e mantenha a sessão disponível para os wrappers GUI.
 
-&nbsp;
+<br>
 
-&nbsp;
+<br>
 
 ---
 
@@ -294,9 +294,9 @@ Tabelas de staging. O orquestrador cria planilhas ocultas (Staging_fwXLSPConn) p
 ### 6.3 Recursos de validação e apoio
 fwHelpers oferece parsing e alinhamento automático (SqlAlignToAce, RewriteDataSourceNames, IsSelectSql), evitando divergências de dialeto. Em caso de falhas, consulte o trace do orquestrador e o relatório preenchido por FillExecReport, que indica SQL final, tempo e quantidade de linhas afetadas.
 
-&nbsp;
+<br>
 
-&nbsp;
+<br>
 
 ---
 
@@ -399,9 +399,9 @@ SET [Salario] = [Salario] * 1.10
 WHERE [ID_Departamento] = 10
 - Resultado: aumenta em 10% o salário dos funcionários do departamento de TI.
 
-&nbsp;
+<br>
 
-&nbsp;
+<br>
 
 ---
 
@@ -445,7 +445,7 @@ End If
 
 ```
 
-&nbsp;
+<br>
 
 **Árvore (`fwGuiTree`)**
 
@@ -465,7 +465,7 @@ End If
 
 ```
 
-&nbsp;
+<br>
 
 **Tabela/ALV (`fwGuiTableControl`)**
 
@@ -488,7 +488,7 @@ End If
 
 ```
 
-&nbsp;
+<br>
 
 **Observação de eficiência**
 - `w.GuiMenu("MenuPai","OpcaoFilha")` pode ser chamado inline, mas em chamadas repetidas no mesmo bloco prefira armazenar a instância (`Set m = ...`) e reutilizar.
@@ -516,16 +516,16 @@ End With
 
 ```
 
-&nbsp;
+<br>
 
-&nbsp;
+<br>
 
 ---
 
 ## 9. Conclusão
 O SPXLSAP Tool unifica acesso a dados e automação SAP em uma única base VBA. O catálogo dinâmico, o pipeline Stage-Update-Sync, os conectores especializados e os wrappers de GUI permitem que desenvolvedores foquem em regras de negócio sem se preocupar com infraestrutura de conectividade. Com suporte completo a operações CRUD, rastreamento integrado e componentes prontos para manipular ListObjects e SAP GUI, o framework sustenta soluções de automação robustas, auditáveis e alinhadas às políticas corporativas.
 
-&nbsp;
+<br>
 
 ---
 
