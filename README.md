@@ -1,7 +1,7 @@
 SPXLSAP
 =======
 
-- Versão: 1.0
+- Versão: 1.0.0
 - Data: 30/03/2026
 
 &nbsp;
