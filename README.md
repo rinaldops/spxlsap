@@ -65,16 +65,25 @@ Permite evoluir o framework de forma incremental, pois novas integrações podem
 ## 2. Guia Rápido para Iniciar
 
 ### 2.1 Pré-requisitos de ambiente
-Office e SAP GUI. Excel 2019/Office 365 com macros habilitadas e SAP GUI 7.70+ com scripting liberado (perfil Z:BC_PB001_USUARIO_EXEC_SCRIPT).
-Conectividade corporativa. Acesso VPN, permissões de leitura/escrita às listas SharePoint e direito de executar SAPExecuteCommand nas queries BW.
-Workbook confiável. Arquivo salvo em local listado no Trust Center; pVariaveis preenchida com URLs, GUIDs, datas, flags (chkMaster, chkAtualizaSP) e credenciais de BW.
-Dependências internas. Add-ins SAP instalados, Power Query configurado e planilhas auxiliares (SITOP_BW, Origem/Destino etc.) atualizadas pelo último CarregaPlanilhasBW.
+
+**Office e SAP GUI** - Excel 2019/Office 365 com macros habilitadas e SAP GUI 7.70+ com scripting liberado (perfil Z:BC_PB001_USUARIO_EXEC_SCRIPT).
+
+**Conectividade corporativa** - Acesso VPN, permissões de leitura/escrita às listas SharePoint e direito de executar SAPExecuteCommand nas queries BW.
+
+**Workbook confiável** - Arquivo salvo em local listado no Trust Center; pVariaveis preenchida com URLs, GUIDs, datas, flags (chkMaster, chkAtualizaSP) e credenciais de BW.
+
+**Dependências internas* - Add-ins SAP instalados, Power Query configurado e planilhas auxiliares (SITOP_BW, Origem/Destino etc.) atualizadas pelo último CarregaPlanilhasBW.
 
 ### 2.2 Troubleshooting essencial
+
 SAP scripting desabilitado. Verifique o perfil de segurança, confirme que saplogon.exe está aberto e use initSAP/fwSAPConn.Connect (que invoca EnsureSapLogonRunning) antes de repetir a macro.
+
 Erros ACE/IMEX. Salve o workbook antes de DML, assegure que colunas-chave estejam formatadas como número; o Stage-Update-Sync aplica NumberFormat = "0", mas colunas manuais podem exigir ajuste.
+
 Lista/URL inválida. Revise pVariaveis e use orquestrador.InitSP Nome, URL, GUID para registrar trios corretos; mensagens “Fonte não encontrada” indicam GUID ou apelido divergente.
+
 Registro bloqueado. Macros PAGESP exibem “Usuário sem permissão” ou “Registro bloqueado” em OBSERVAÇÕES. Ajuste a coluna Acessos ou o Ponto Focal na tabela/SharePoint e reexecute o lote.
+
 Power Query não atualiza. Execute RefreshTablesInSequence para forçar QueryTable.Refresh, cheque credenciais armazenadas e monitore logs (TraceOn) para encontrar planilhas com falha.
 
 <br>
@@ -86,22 +95,32 @@ Power Query não atualiza. Execute RefreshTablesInSequence para forçar QueryTab
 ## 3. Arquitetura e Conceitos Fundamentais
 
 ### 3.1 Componentes principais
-fwXLSPConn (orquestrador SQL). Recebe o catálogo consolidado, interpreta o comando e delega para o conector adequado. Também mantém o dicionário de tabelas temporárias e o ciclo Stage-Update-Sync.
-fwXLConn (motor Excel). Traduz o SQL para o dialeto ACE, abre a conexão ADO contra o ActiveWorkbook e retorna dados ou rowsAffected. Suporta modo leitura/escrita dinâmico (IMEX=1/0).
-fwSPConn (motor SharePoint). Abstrai a conexão OLEDB WSS, controla o campo chave (SPKeyField) e executa DML em listas.
-fwHelpers. Centraliza parsing de SQL, normalização de nomes, geração de catálogos (CreateDynamifwXLTableCatalog) e relatórios de execução (FillExecReport).
+
+**fwXLSPConn (orquestrador SQL)** - Recebe o catálogo consolidado, interpreta o comando e delega para o conector adequado. Também mantém o dicionário de tabelas temporárias e o ciclo Stage-Update-Sync.
+
+**fwXLConn (motor Excel)** - Traduz o SQL para o dialeto ACE, abre a conexão ADO contra o ActiveWorkbook e retorna dados ou rowsAffected. Suporta modo leitura/escrita dinâmico (IMEX=1/0).
+
+**fwSPConn (motor SharePoint)** - Abstrai a conexão OLEDB WSS, controla o campo chave (SPKeyField) e executa DML em listas.
+
+**fwHelpers** - Centraliza parsing de SQL, normalização de nomes, geração de catálogos (CreateDynamifwXLTableCatalog) e relatórios de execução (FillExecReport).
 fwXLTable. Expõe uma API de manipulação de ListObjects, usada tanto por macros de negócio quanto pelo fluxo de staging para carregar e navegar em lotes.
-fwSAPConn e wrappers GUI. fwSAPConn garante sessões vivas enquanto fwGuiMainWindow, fwGuiMenu, fwGuiTree e fwGuiTableControl encapsulam interações avançadas na interface SAP.
-Módulos de apoio. modUCOrquestracao, modUCAuxiliarCore, modRibbon e fwSapGuiApi integram a solução com a Ribbon, cuidam de exportações ALV (via rotinas UC) e expõem funções reutilizáveis.
+
+**fwSAPConn e wrappers GUI** - fwSAPConn garante sessões vivas enquanto fwGuiMainWindow, fwGuiMenu, fwGuiTree e fwGuiTableControl encapsulam interações avançadas na interface SAP.
+
+**Módulos de apoio** - modUCOrquestracao, modUCAuxiliarCore, modRibbon e fwSapGuiApi integram a solução com a Ribbon, cuidam de exportações ALV (via rotinas UC) e expõem funções reutilizáveis.
 
 ### 3.2 Padrões operacionais
+
 Catálogo unificado. Todo comando passa por um dicionário único que descreve onde cada entidade reside (XL ou SP), permitindo renomear fontes sem tocar nos SQLs. Esse catálogo é criado automaticamente ao inicializar a classe fwXLSPConn corretamente.
-Stage-First. Consultas híbridas trazem dados do SharePoint para tabelas ocultas (Staging_fwXLSPConn) antes de executar JOINs, garantindo performance e consistência.
-Execução adaptativa. O orquestrador identifica se o comando é leitura ou escrita e comuta automaticamente conexão, dialeto e locking para cada origem.
+
+**Stage-First** - Consultas híbridas trazem dados do SharePoint para tabelas ocultas (Staging_fwXLSPConn) antes de executar JOINs, garantindo performance e consistência.
+
+**Execução adaptativa** - O orquestrador identifica se o comando é leitura ou escrita e comuta automaticamente conexão, dialeto e locking para cada origem.
 Observabilidade integrada. TraceOn propaga logs para todas as classes e os helpers registram tempos, SQL final e métricas no execReport, facilitando troubleshooting.
 Manutenção de contexto SAP. As rotinas de automação consultam pVariaveis, validam a sessão (IsSessionAlive) e reaproveitam a mesma conexão SAP para comandos em lote.
 
 ### 3.3 Ecossistema de dados e SAP
+
 O desenho modular permite misturar interações de dados (SQL, manipulação de ListObjects, atualizações SharePoint) com automações SAP no mesmo fluxo. Uma rotina pode extrair dados via RunQuery, pintá-los com fwXLTable para revisão humana, disparar transações SAP com fwGuiMainWindow.TCode e, ao final, sincronizar status no SharePoint — tudo sem sair do workbook.
 
 <br>
@@ -113,6 +132,7 @@ O desenho modular permite misturar interações de dados (SQL, manipulação de 
 ## 4. Mecanismo de Staging do Framework
 
 ### 4.1 Visão geral
+
 O SPXLSAP opera em camadas para decidir quando rodar consultas diretamente na fonte e quando criar cópias temporárias em Excel. O orquestrador fwXLSPConn avalia cada SQL, identifica as origens envolvidas e escolhe entre rotas Direct-XL, Direct-SP ou Stage-First. O objetivo é garantir desempenho, preservar a integridade das listas SharePoint e permitir consultas federadas que misturam fontes heterogêneas.
 
 ### 4.1.1 Contexto Stage-Update-Sync
