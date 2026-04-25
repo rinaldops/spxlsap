@@ -22,27 +22,27 @@ Essa arquitetura permite criar pipelines que leem, transformam e sincronizam dad
 
 ### 1.2 Camadas funcionais
 
-Orquestração SQL multiorigem. fwXLSPConn constrói dinamicamente o catálogo de ListObjects do ActiveWorkbook, mescla as fontes SharePoint recebidas por InitSP e decide, comando a comando, se o processamento ocorre localmente (fwXLConn) ou remotamente (fwSPConn), sempre apoiado pela camada de parsing de fwHelpers.
+**Orquestração SQL multiorigem** - fwXLSPConn constrói dinamicamente o catálogo de ListObjects do ActiveWorkbook, mescla as fontes SharePoint recebidas por InitSP e decide, comando a comando, se o processamento ocorre localmente (fwXLConn) ou remotamente (fwSPConn), sempre apoiado pela camada de parsing de fwHelpers.
 
-Motor de tabelas Excel. fwXLTable expõe operações de navegação (firstRow, GoToNextRow, RangeRow), carga (XLLoadArray), ajustes estruturais (AddColumnByName, EnsureHelpers) e formatação orientada a processos (QtdVisibleRows, ToDateSAP), permitindo que ListObjects funcionem como buffers transacionais.
+**Motor de tabelas Excel** - fwXLTable expõe operações de navegação (firstRow, GoToNextRow, RangeRow), carga (XLLoadArray), ajustes estruturais (AddColumnByName, EnsureHelpers) e formatação orientada a processos (QtdVisibleRows, ToDateSAP), permitindo que ListObjects funcionem como buffers transacionais.
 
-Integração SAP GUI. fwSAPConn garante a abertura do SAP Logon, escolhe/constrói a conexão adequada e entrega um GuiSession pronto para uso. A camada de GUI wrappers encapsula interações complexas (menus dinâmicos, árvores técnicas, ALV grids) e padroniza o acesso a findById.
+**Integração SAP GUI** - fwSAPConn garante a abertura do SAP Logon, escolhe/constrói a conexão adequada e entrega um GuiSession pronto para uso. A camada de GUI wrappers encapsula interações complexas (menus dinâmicos, árvores técnicas, ALV grids) e padroniza o acesso a findById.
 
-Processos e utilitários. Módulos como modUCOrquestracao, modUCAuxiliarCore e modRibbon mostram exemplos de casos de uso, auxiliando na compreensão do funcionamento do framework em um cenário de automação de processos.
+**Processos e utilitários** - Módulos como modUCOrquestracao, modUCAuxiliarCore e modRibbon mostram exemplos de casos de uso, auxiliando na compreensão do funcionamento do framework em um cenário de automação de processos.
 
 ### 1.3 Funcionalidades-chave
 
-SQL único para múltiplas fontes. A pilha fwXLSPConn + fwHelpers interpreta SELECT/INSERT/UPDATE/DELETE, reescreve nomes físicos (RewriteDataSourceNames), aplica o dialeto ACE (SqlAlignToAce) e opera o fluxo Stage-Update-Sync descrito no item 4, garantindo consistência entre SharePoint e Excel.
+**SQL único para múltiplas fontes** - A pilha fwXLSPConn + fwHelpers interpreta SELECT/INSERT/UPDATE/DELETE, reescreve nomes físicos (RewriteDataSourceNames), aplica o dialeto ACE (SqlAlignToAce) e opera o fluxo Stage-Update-Sync descrito no item 4, garantindo consistência entre SharePoint e Excel.
 
-Catálogo dinâmico e parametrizável. CreateDynamifwXLTableCatalog descobre todas as tabelas locais, enquanto ParseSPInitParams interpreta parâmetros declarativos em trios (nome, siteURL, listID), reduzindo o boilerplate de configuração.
+**Catálogo dinâmico e parametrizável** - CreateDynamifwXLTableCatalog descobre todas as tabelas locais, enquanto ParseSPInitParams interpreta parâmetros declarativos em trios (nome, siteURL, listID), reduzindo o boilerplate de configuração.
 
-Manipulação rica de ListObjects. Rotinas como XLLoadArray, RangeRow, QtdVisibleRows, AddColumnByName e ToDateSAP permitem popular tabelas, validar conteúdo, destacar linhas em processamento e ajustar formatos exigidos por integrações SAP sem escrever código repetitivo.
+**Manipulação rica de ListObjects** - Rotinas como XLLoadArray, RangeRow, QtdVisibleRows, AddColumnByName e ToDateSAP permitem popular tabelas, validar conteúdo, destacar linhas em processamento e ajustar formatos exigidos por integrações SAP sem escrever código repetitivo.
 
-Sincronização SharePoint dirigida por linha. Os fluxos de orquestração do módulo modUCOrquestracao demonstram o uso de RunQuery para atualização dos registros visíveis/selecionados, registrando o resultado na coluna OBSERVAÇÕES e mantendo feedback imediato ao usuário.
+**Sincronização SharePoint dirigida por linha** - Os fluxos de orquestração do módulo modUCOrquestracao demonstram o uso de RunQuery para atualização dos registros visíveis/selecionados, registrando o resultado na coluna OBSERVAÇÕES e mantendo feedback imediato ao usuário.
 
-Sessões SAP resilientes. EnsureSapLogonRunning, PickOrOpenConnection, EnsureWantedSession e PerformInteractiveLogon lidam com abertura de cliente, múltiplas janelas e recuperação após quedas, enquanto a Ribbon customizada exibe o estado da conexão em tempo real.
+**Sessões SAP resilientes** - EnsureSapLogonRunning, PickOrOpenConnection, EnsureWantedSession e PerformInteractiveLogon lidam com abertura de cliente, múltiplas janelas e recuperação após quedas, enquanto a Ribbon customizada exibe o estado da conexão em tempo real.
 
-Wrappers reutilizáveis de GUI. fwGuiMainWindow, fwGuiMenu, fwGuiTree e fwGuiTableControl encapsulam padrões comuns (busca híbrida por elementos, leitura de ALV, interação com menus contextuais), simplificando a escrita de rotinas SAP específicas como a existente em btnProcessar_Click.
+**Wrappers reutilizáveis de GUI** - fwGuiMainWindow, fwGuiMenu, fwGuiTree e fwGuiTableControl encapsulam padrões comuns (busca híbrida por elementos, leitura de ALV, interação com menus contextuais), simplificando a escrita de rotinas SAP específicas como a existente em btnProcessar_Click.
 
 ### 1.4 Benefícios para automação
 
@@ -72,19 +72,19 @@ Permite evoluir o framework de forma incremental, pois novas integrações podem
 
 **Workbook confiável** - Arquivo salvo em local listado no Trust Center; pVariaveis preenchida com URLs, GUIDs, datas, flags (chkMaster, chkAtualizaSP) e credenciais de BW.
 
-**Dependências internas* - Add-ins SAP instalados, Power Query configurado e planilhas auxiliares (SITOP_BW, Origem/Destino etc.) atualizadas pelo último CarregaPlanilhasBW.
+**Dependências internas** - Add-ins SAP instalados, Power Query configurado e planilhas auxiliares (SITOP_BW, Origem/Destino etc.) atualizadas pelo último CarregaPlanilhasBW.
 
 ### 2.2 Troubleshooting essencial
 
-SAP scripting desabilitado. Verifique o perfil de segurança, confirme que saplogon.exe está aberto e use initSAP/fwSAPConn.Connect (que invoca EnsureSapLogonRunning) antes de repetir a macro.
+**SAP scripting desabilitado** - Verifique o perfil de segurança, confirme que saplogon.exe está aberto e use initSAP/fwSAPConn.Connect (que invoca EnsureSapLogonRunning) antes de repetir a macro.
 
-Erros ACE/IMEX. Salve o workbook antes de DML, assegure que colunas-chave estejam formatadas como número; o Stage-Update-Sync aplica NumberFormat = "0", mas colunas manuais podem exigir ajuste.
+**Erros ACE/IMEX** - Salve o workbook antes de DML, assegure que colunas-chave estejam formatadas como número; o Stage-Update-Sync aplica NumberFormat = "0", mas colunas manuais podem exigir ajuste.
 
-Lista/URL inválida. Revise pVariaveis e use orquestrador.InitSP Nome, URL, GUID para registrar trios corretos; mensagens “Fonte não encontrada” indicam GUID ou apelido divergente.
+**Lista/URL inválida** - Revise pVariaveis e use orquestrador.InitSP Nome, URL, GUID para registrar trios corretos; mensagens “Fonte não encontrada” indicam GUID ou apelido divergente.
 
-Registro bloqueado. Macros PAGESP exibem “Usuário sem permissão” ou “Registro bloqueado” em OBSERVAÇÕES. Ajuste a coluna Acessos ou o Ponto Focal na tabela/SharePoint e reexecute o lote.
+**Registro bloqueado** - Macros PAGESP exibem “Usuário sem permissão” ou “Registro bloqueado” em OBSERVAÇÕES. Ajuste a coluna Acessos ou o Ponto Focal na tabela/SharePoint e reexecute o lote.
 
-Power Query não atualiza. Execute RefreshTablesInSequence para forçar QueryTable.Refresh, cheque credenciais armazenadas e monitore logs (TraceOn) para encontrar planilhas com falha.
+**Power Query não atualiza** - Execute RefreshTablesInSequence para forçar QueryTable.Refresh, cheque credenciais armazenadas e monitore logs (TraceOn) para encontrar planilhas com falha.
 
 <br>
 
