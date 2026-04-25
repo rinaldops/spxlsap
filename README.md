@@ -46,15 +46,15 @@ Essa arquitetura permite criar pipelines que leem, transformam e sincronizam dad
 
 ### 1.4 Benefícios para automação
 
-Reduz o acoplamento entre fontes de dados ao expor um SQL único independente da origem física.
+- Reduz o acoplamento entre fontes de dados ao expor um SQL único independente da origem física.
 
-Minimiza riscos operacionais com staging local, logs (TraceOn nas classes de dados e wrappers principais) e monitoramento automático da sessão SAP.
+- Minimiza riscos operacionais com staging local, logs (TraceOn nas classes de dados e wrappers principais) e monitoramento automático da sessão SAP.
 
-Padroniza a experiência do desenvolvedor: um único catálogo, objetos de tabela navegáveis e wrappers GUI diminuem a curva de aprendizado.
+- Padroniza a experiência do desenvolvedor: um único catálogo, objetos de tabela navegáveis e wrappers GUI diminuem a curva de aprendizado.
 
-Facilita compliance (rótulos de confidencialidade, controle de acesso via SharePoint) sem inserir essas preocupações nos scripts de negócio.
+- Facilita compliance (rótulos de confidencialidade, controle de acesso via SharePoint) sem inserir essas preocupações nos scripts de negócio.
 
-Permite evoluir o framework de forma incremental, pois novas integrações podem usar os mesmos conectores e helpers já consolidados.
+- Permite evoluir o framework de forma incremental, pois novas integrações podem usar os mesmos conectores e helpers já consolidados.
 
 <br>
 
