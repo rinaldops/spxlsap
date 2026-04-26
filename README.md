@@ -8,7 +8,7 @@ A proposta é bem prática: deixar o desenvolvedor escrever a regra de negócio 
 
 Esse ponto é importante principalmente para quem está começando. O SPXLSAP não tenta esconder que automação corporativa envolve assuntos técnicos: ADODB, ACE/OLEDB, SharePoint, ListObjects, SAP GUI Scripting, sessões SAP, IDs técnicos de tela, comandos SQL, tratamento de filtros e sincronização de dados. Tudo isso continua existindo. A diferença é que o framework organiza esses temas em camadas mais previsíveis, com nomes claros, rotas padronizadas e exemplos que ajudam o desenvolvedor a aprender enquanto constrói.
 
-O arquivo [SPXLSAP Tools.md](SPXLSAP%20Tools.md) mostra um exemplo de solução criada em cima desse framework. Aquela ferramenta é uma planilha pronta, com Ribbon, botões e rotinas de exemplo. Este repositório, por outro lado, contém a base: as classes e módulos que você pode importar em outros projetos para montar soluções parecidas, maiores, menores ou completamente diferentes.
+O projeto [SPXLSAP Tools](https://github.com/rinaldops/spxlsap_tools) mostra um exemplo de solução criada em cima desse framework. Aquela ferramenta é uma planilha pronta, com Ribbon, botões e rotinas de exemplo. Este repositório, por outro lado, contém a base: as classes e módulos que você pode importar em outros projetos para montar soluções parecidas, maiores, menores ou completamente diferentes.
 
 ## Para que o framework existe
 
@@ -16,7 +16,7 @@ Grande parte das automações feitas em Excel nasce de uma necessidade simples: 
 
 Sem uma base comum, cada automação resolve esses problemas de um jeito diferente. Um projeto abre a conexão SAP de uma forma, outro percorre tabela do Excel de outra, outro monta SQL por concatenação, outro acessa SharePoint diretamente dentro da macro principal. Funciona por algum tempo, mas a manutenção fica pesada. Pequenas mudanças viram risco, o reaproveitamento é baixo e quem chega depois precisa descobrir tudo no escuro.
 
-O SPXLSAP entra justamente nesse espaço. Ele oferece uma arquitetura de apoio para que novas soluções sejam construídas com mais rapidez, mas sem abrir mão de robustez. O desenvolvedor continua tendo liberdade para desenhar o fluxo do seu processo, mas passa a contar com conectores, wrappers e helpers que já tratam vários detalhes chatos do caminho.
+O SPXLSAP entra justamente nesse espaço. Ele oferece uma arquitetura de apoio para que novas soluções sejam construídas com mais rapidez, mas sem abrir mão de robustez. O desenvolvedor continua tendo liberdade para desenhar o fluxo do seu processo, mas passa a contar com conectores, wrappers e helpers que já tratam vários detalhes desagradáveis do caminho.
 
 Na prática, o framework ajuda você a:
 
@@ -270,7 +270,7 @@ Essa divisão ajuda iniciantes a acompanhar o raciocínio e ajuda desenvolvedore
 
 Automação corporativa geralmente roda sobre dados reais. O usuário precisa saber o que aconteceu. Uma coluna como `OBSERVACOES`, `STATUS_PROCESSAMENTO` ou `MENSAGEM` ajuda a registrar linha a linha se o item foi processado, ignorado, bloqueado, atualizado ou se falhou.
 
-Esse padrão aparece no SPXLSAP Tools e deve ser reaproveitado em outras soluções. Quando o retorno fica na própria tabela, o usuário não depende de uma mensagem temporária que desaparece ao final da macro.
+Esse padrão aparece no  projeto [SPXLSAP Tools](https://github.com/rinaldops/spxlsap_tools) e deve ser reaproveitado em outras soluções. Quando o retorno fica na própria tabela, o usuário não depende de uma mensagem temporária que desaparece ao final da macro.
 
 ### Prefira wrappers a chamadas soltas de SAP GUI
 
@@ -424,7 +424,7 @@ Outro ponto importante é a manutenção dos IDs de tela. SAP GUI Scripting depe
 
 ## Adaptabilidade
 
-O SPXLSAP não foi feito para um único processo. Ele foi feito para ser uma base de construção. O projeto [SPXLSAP Tools.md](SPXLSAP%20Tools.md) mostra uma planilha com Ribbon e exemplos de uso, mas o mesmo framework pode sustentar outras soluções, como:
+O SPXLSAP não foi feito para um único processo. Ele foi feito para ser uma base de construção. O projeto [SPXLSAP Tools](https://github.com/rinaldops/spxlsap_tools) mostra uma planilha com Ribbon e exemplos de uso, mas o mesmo framework pode sustentar outras soluções, como:
 
 - carga e validação de dados antes de execução no SAP;
 - consulta de informações SAP e montagem de relatórios em Excel;
@@ -446,7 +446,7 @@ Se sua dificuldade é conexão SAP, olhe [fwSAPConn.cls](src/fwSAPConn.cls) e [f
 
 Se sua dificuldade é SharePoint, comece com `InitSP` e um `SELECT` simples. Só depois avance para escrita.
 
-Se sua dificuldade é entender a arquitetura, leia este README de cima para baixo e, em seguida, compare com o exemplo descrito em [SPXLSAP Tools.md](SPXLSAP%20Tools.md). A documentação da ferramenta mostra uma aplicação concreta; este README mostra a base que permite construir aquela aplicação.
+Se sua dificuldade é entender a arquitetura, leia este README de cima para baixo e, em seguida, compare com o exemplo descrito no projeto [SPXLSAP Tools](https://github.com/rinaldops/spxlsap_tools). A documentação da ferramenta mostra uma aplicação concreta; este README mostra a base que permite construir aquela aplicação.
 
 ## Para quem já desenvolve em VBA
 
