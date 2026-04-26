@@ -11,7 +11,7 @@ Attribute VB_Exposed = False
 ' Nome do elemento: fwXLTable (Classe)
 ' Resumo:
 '   Encapsula operações sobre ListObjects do Excel, oferecendo navegação,
-'   seleção, formatação e manipulação de dados em tabela estruturadas.
+'   seleção, formatação e manipulação de dados em tabelas XL estruturadas.
 '******************************************************************************
 Option Explicit
 
