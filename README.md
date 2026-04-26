@@ -1,567 +1,475 @@
-SPXLSAP
-=======
+# SPXLSAP
 
-- Versão: 1.0.0
-- Data: 30/03/2026
+Versão do framework: **1.0.0**
 
-<br>
+O **SPXLSAP** é um framework VBA para construir automações corporativas que precisam conversar com **Excel**, **SharePoint** e **SAP GUI** sem transformar cada novo projeto em uma coleção de macros soltas, difíceis de entender e mais difíceis ainda de manter.
 
-## 1. Visão Geral
+A proposta é bem prática: deixar o desenvolvedor escrever a regra de negócio com menos atrito. Em vez de recomeçar do zero sempre que precisar ler uma tabela do Excel, consultar uma lista SharePoint, atualizar registros em lote, navegar por uma tela do SAP, localizar uma tabela ALV ou controlar uma sessão SAP aberta, o framework oferece classes prontas para esses trabalhos comuns. Assim, o código do projeto fica mais focado no processo que está sendo automatizado e menos na infraestrutura repetitiva que todo mundo acaba reescrevendo.
 
-### 1.1 Propósito do framework
+Esse ponto é importante principalmente para quem está começando. O SPXLSAP não tenta esconder que automação corporativa envolve assuntos técnicos: ADODB, ACE/OLEDB, SharePoint, ListObjects, SAP GUI Scripting, sessões SAP, IDs técnicos de tela, comandos SQL, tratamento de filtros e sincronização de dados. Tudo isso continua existindo. A diferença é que o framework organiza esses temas em camadas mais previsíveis, com nomes claros, rotas padronizadas e exemplos que ajudam o desenvolvedor a aprender enquanto constrói.
 
-O SPXLSAP Tool é um framework de automação em VBA que conecta dados corporativos e transações SAP a partir de um único ponto de controle. Ele combina três pilares: 
+O projeto [SPXLSAP Tools](https://github.com/rinaldops/spxlsap_tools) mostra um exemplo de solução criada em cima desse framework. Aquela ferramenta é uma planilha pronta, com Ribbon, botões e rotinas de exemplo. Este repositório, por outro lado, contém a base: as classes e módulos que você pode importar em outros projetos para montar soluções parecidas, maiores, menores ou completamente diferentes.
 
-(i) execução de SQL padronizado sobre ListObjects e listas SharePoint via fwXLSPConn, fwXLConn, fwSPConn e fwHelpers; 
+## Para que o framework existe
 
-(ii) manipulação estruturada de tabelas Excel com fwXLTable; e 
+Grande parte das automações feitas em Excel nasce de uma necessidade simples: alguém tem uma massa de dados em uma planilha, precisa consultar ou atualizar informações em algum sistema corporativo e quer reduzir trabalho manual. O problema aparece quando a solução cresce. A macro que antes só clicava em uma tela do SAP passa a depender de filtros, tabelas auxiliares, listas SharePoint, consultas SQL, validações, mensagens de retorno, logs, permissões e várias exceções de processo.
 
-(iii) automação assistida do SAP GUI através de fwSAPConn, fwGuiMainWindow, fwGuiMenu, fwGuiTree e fwGuiTableControl. 
+Sem uma base comum, cada automação resolve esses problemas de um jeito diferente. Um projeto abre a conexão SAP de uma forma, outro percorre tabela do Excel de outra, outro monta SQL por concatenação, outro acessa SharePoint diretamente dentro da macro principal. Funciona por algum tempo, mas a manutenção fica pesada. Pequenas mudanças viram risco, o reaproveitamento é baixo e quem chega depois precisa descobrir tudo no escuro.
 
-Essa arquitetura permite criar pipelines que leem, transformam e sincronizam dados antes de disparar rotinas SAP, mantendo toda a lógica encapsulada no próprio Workbook.
+O SPXLSAP entra justamente nesse espaço. Ele oferece uma arquitetura de apoio para que novas soluções sejam construídas com mais rapidez, mas sem abrir mão de robustez. O desenvolvedor continua tendo liberdade para desenhar o fluxo do seu processo, mas passa a contar com conectores, wrappers e helpers que já tratam vários detalhes desagradáveis do caminho.
 
-### 1.2 Camadas funcionais
+Na prática, o framework ajuda você a:
 
-**Orquestração SQL multiorigem** - fwXLSPConn constrói dinamicamente o catálogo de ListObjects do ActiveWorkbook, mescla as fontes SharePoint recebidas por InitSP e decide, comando a comando, se o processamento ocorre localmente (fwXLConn) ou remotamente (fwSPConn), sempre apoiado pela camada de parsing de fwHelpers.
+- trabalhar com tabelas estruturadas do Excel como se fossem bases de dados locais;
+- executar consultas e comandos SQL sobre fontes Excel e SharePoint;
+- sincronizar dados entre Excel e listas SharePoint com menos código manual;
+- automatizar telas SAP usando objetos mais amigáveis do que `session.findById` espalhado por todo lado;
+- manter a sessão SAP viva e reaproveitável durante o processamento;
+- criar rotinas que registram resultado, progresso e mensagens de erro de forma mais padronizada;
+- separar melhor o que é infraestrutura do framework e o que é regra de negócio da sua solução.
 
-**Motor de tabelas Excel** - fwXLTable expõe operações de navegação (firstRow, GoToNextRow, RangeRow), carga (XLLoadArray), ajustes estruturais (AddColumnByName, EnsureHelpers) e formatação orientada a processos (QtdVisibleRows, ToDateSAP), permitindo que ListObjects funcionem como buffers transacionais.
+## Como pensar no SPXLSAP
 
-**Integração SAP GUI** - fwSAPConn garante a abertura do SAP Logon, escolhe/constrói a conexão adequada e entrega um GuiSession pronto para uso. A camada de GUI wrappers encapsula interações complexas (menus dinâmicos, árvores técnicas, ALV grids) e padroniza o acesso a findById.
+Um jeito simples de entender o SPXLSAP é imaginar três grandes blocos trabalhando juntos.
 
-**Processos e utilitários** - Módulos como modUCOrquestracao, modUCAuxiliarCore e modRibbon mostram exemplos de casos de uso, auxiliando na compreensão do funcionamento do framework em um cenário de automação de processos.
+O primeiro bloco é o de **dados**. Ele cuida das fontes que alimentam ou recebem informações: tabelas do Excel, listas SharePoint e consultas feitas por SQL. Nesse bloco entram principalmente `fwXLSPConn`, `fwXLConn`, `fwSPConn`, `fwXLTable` e `fwHelpers`.
 
-### 1.3 Funcionalidades-chave
+O segundo bloco é o de **SAP GUI**. Ele cuida da conexão com o SAP, da janela ativa, dos campos, menus, árvores, tabelas e elementos que aparecem na tela. Nesse bloco entram `fwSAPConn`, `fwGuiMainWindow`, `fwGuiMenu`, `fwGuiTree`, `fwGuiTableControl` e `fwSapGuiApi`.
 
-**SQL único para múltiplas fontes** - A pilha fwXLSPConn + fwHelpers interpreta SELECT/INSERT/UPDATE/DELETE, reescreve nomes físicos (RewriteDataSourceNames), aplica o dialeto ACE (SqlAlignToAce) e opera o fluxo Stage-Update-Sync descrito no item 4, garantindo consistência entre SharePoint e Excel.
+O terceiro bloco é o de **orquestração do processo**. Esse não é uma classe única do framework, porque depende de cada automação. É o código que você escreve para dizer: primeiro busque dados, depois filtre as linhas visíveis, depois abra a transação SAP, depois preencha os campos, depois registre o resultado no Excel e, se for o caso, sincronize no SharePoint. O framework não toma a regra de negócio da sua mão; ele só entrega ferramentas melhores para você escrever essa regra.
 
-**Catálogo dinâmico e parametrizável** - CreateDynamifwXLTableCatalog descobre todas as tabelas locais, enquanto ParseSPInitParams interpreta parâmetros declarativos em trios (nome, siteURL, listID), reduzindo o boilerplate de configuração.
+Essa separação ajuda muito no aprendizado. Um iniciante pode começar usando `fwXLTable` para navegar por uma tabela do Excel. Depois pode usar `fwSAPConn` para conectar no SAP. Em seguida pode experimentar `fwGuiMainWindow.TCode` para abrir uma transação. Mais adiante, pode usar `fwXLSPConn.RunQuery` para misturar Excel e SharePoint com SQL. Não é necessário dominar tudo no primeiro dia.
 
-**Manipulação rica de ListObjects** - Rotinas como XLLoadArray, RangeRow, QtdVisibleRows, AddColumnByName e ToDateSAP permitem popular tabelas, validar conteúdo, destacar linhas em processamento e ajustar formatos exigidos por integrações SAP sem escrever código repetitivo.
+## Arquitetura em camadas
 
-**Sincronização SharePoint dirigida por linha** - Os fluxos de orquestração do módulo modUCOrquestracao demonstram o uso de RunQuery para atualização dos registros visíveis/selecionados, registrando o resultado na coluna OBSERVAÇÕES e mantendo feedback imediato ao usuário.
+O SPXLSAP foi organizado em camadas para evitar que uma macro de negócio tenha que conhecer todos os detalhes técnicos ao mesmo tempo. Cada classe tem uma responsabilidade mais clara, e isso facilita tanto o uso quanto a manutenção.
 
-**Sessões SAP resilientes** - EnsureSapLogonRunning, PickOrOpenConnection, EnsureWantedSession e PerformInteractiveLogon lidam com abertura de cliente, múltiplas janelas e recuperação após quedas, enquanto a Ribbon customizada exibe o estado da conexão em tempo real.
+### Camada de orquestração SQL
 
-**Wrappers reutilizáveis de GUI** - fwGuiMainWindow, fwGuiMenu, fwGuiTree e fwGuiTableControl encapsulam padrões comuns (busca híbrida por elementos, leitura de ALV, interação com menus contextuais), simplificando a escrita de rotinas SAP específicas como a existente em btnProcessar_Click.
+A classe [fwXLSPConn](src/fwXLSPConn.cls) é o ponto central quando a automação precisa executar SQL envolvendo Excel e SharePoint. Ela monta um catálogo das fontes disponíveis, entende quais tabelas estão no workbook, registra as listas SharePoint informadas pelo desenvolvedor e decide qual caminho usar para cada comando.
 
-### 1.4 Benefícios para automação
+Se a consulta usa apenas uma tabela local do Excel, o framework pode enviar o trabalho para `fwXLConn`. Se usa apenas uma lista SharePoint, pode enviar para `fwSPConn`. Se mistura fontes, o framework pode criar uma área temporária de staging no Excel, trazer os dados necessários e executar o restante localmente.
 
-- Reduz o acoplamento entre fontes de dados ao expor um SQL único independente da origem física.
-
-- Minimiza riscos operacionais com staging local, logs (TraceOn nas classes de dados e wrappers principais) e monitoramento automático da sessão SAP.
-
-- Padroniza a experiência do desenvolvedor: um único catálogo, objetos de tabela navegáveis e wrappers GUI diminuem a curva de aprendizado.
-
-- Facilita compliance (rótulos de confidencialidade, controle de acesso via SharePoint) sem inserir essas preocupações nos scripts de negócio.
-
-- Permite evoluir o framework de forma incremental, pois novas integrações podem usar os mesmos conectores e helpers já consolidados.
-
-<br>
-
-<br>
-
----
-
-## 2. Guia Rápido para Iniciar
-
-### 2.1 Pré-requisitos de ambiente
-
-**Office e SAP GUI** - Excel 2019/Office 365 com macros habilitadas e SAP GUI 7.70+ com scripting liberado (perfil Z:BC_PB001_USUARIO_EXEC_SCRIPT).
-
-**Conectividade corporativa** - Acesso VPN, permissões de leitura/escrita às listas SharePoint e direito de executar SAPExecuteCommand nas queries BW.
-
-**Workbook confiável** - Arquivo salvo em local listado no Trust Center; pVariaveis preenchida com URLs, GUIDs, datas, flags (chkMaster, chkAtualizaSP) e credenciais de BW.
-
-**Dependências internas** - Add-ins SAP instalados, Power Query configurado e planilhas auxiliares (SITOP_BW, Origem/Destino etc.) atualizadas pelo último CarregaPlanilhasBW.
-
-### 2.2 Troubleshooting essencial
-
-**SAP scripting desabilitado** - Verifique o perfil de segurança, confirme que saplogon.exe está aberto e use initSAP/fwSAPConn.Connect (que invoca EnsureSapLogonRunning) antes de repetir a macro.
-
-**Erros ACE/IMEX** - Salve o workbook antes de DML, assegure que colunas-chave estejam formatadas como número; o Stage-Update-Sync aplica NumberFormat = "0", mas colunas manuais podem exigir ajuste.
-
-**Lista/URL inválida** - Revise pVariaveis e use orquestrador.InitSP Nome, URL, GUID para registrar trios corretos; mensagens “Fonte não encontrada” indicam GUID ou apelido divergente.
-
-**Registro bloqueado** - Macros PAGESP exibem “Usuário sem permissão” ou “Registro bloqueado” em OBSERVAÇÕES. Ajuste a coluna Acessos ou o Ponto Focal na tabela/SharePoint e reexecute o lote.
-
-**Power Query não atualiza** - Execute RefreshTablesInSequence para forçar QueryTable.Refresh, cheque credenciais armazenadas e monitore logs (TraceOn) para encontrar planilhas com falha.
-
-<br>
-
-<br>
-
----
-
-## 3. Arquitetura e Conceitos Fundamentais
-
-### 3.1 Componentes principais
-
-**fwXLSPConn (orquestrador SQL)** - Recebe o catálogo consolidado, interpreta o comando e delega para o conector adequado. Também mantém o dicionário de tabelas temporárias e o ciclo Stage-Update-Sync.
-
-**fwXLConn (motor Excel)** - Traduz o SQL para o dialeto ACE, abre a conexão ADO contra o ActiveWorkbook e retorna dados ou rowsAffected. Suporta modo leitura/escrita dinâmico (IMEX=1/0).
-
-**fwSPConn (motor SharePoint)** - Abstrai a conexão OLEDB WSS, controla o campo chave (SPKeyField) e executa DML em listas.
-
-**fwHelpers** - Centraliza parsing de SQL, normalização de nomes, geração de catálogos (CreateDynamifwXLTableCatalog) e relatórios de execução (FillExecReport).
-fwXLTable. Expõe uma API de manipulação de ListObjects, usada tanto por macros de negócio quanto pelo fluxo de staging para carregar e navegar em lotes.
-
-**fwSAPConn e wrappers GUI** - fwSAPConn garante sessões vivas enquanto fwGuiMainWindow, fwGuiMenu, fwGuiTree e fwGuiTableControl encapsulam interações avançadas na interface SAP.
-
-**Módulos de apoio** - modUCOrquestracao, modUCAuxiliarCore, modRibbon e fwSapGuiApi integram a solução com a Ribbon, cuidam de exportações ALV (via rotinas UC) e expõem funções reutilizáveis.
-
-### 3.2 Padrões operacionais
-
-Catálogo unificado. Todo comando passa por um dicionário único que descreve onde cada entidade reside (XL ou SP), permitindo renomear fontes sem tocar nos SQLs. Esse catálogo é criado automaticamente ao inicializar a classe fwXLSPConn corretamente.
-
-**Stage-First** - Consultas híbridas trazem dados do SharePoint para tabelas ocultas (Staging_fwXLSPConn) antes de executar JOINs, garantindo performance e consistência.
-
-**Execução adaptativa** - O orquestrador identifica se o comando é leitura ou escrita e comuta automaticamente conexão, dialeto e locking para cada origem.
-Observabilidade integrada. TraceOn propaga logs para todas as classes e os helpers registram tempos, SQL final e métricas no execReport, facilitando troubleshooting.
-Manutenção de contexto SAP. As rotinas de automação consultam pVariaveis, validam a sessão (IsSessionAlive) e reaproveitam a mesma conexão SAP para comandos em lote.
-
-### 3.3 Ecossistema de dados e SAP
-
-O desenho modular permite misturar interações de dados (SQL, manipulação de ListObjects, atualizações SharePoint) com automações SAP no mesmo fluxo. Uma rotina pode extrair dados via RunQuery, pintá-los com fwXLTable para revisão humana, disparar transações SAP com fwGuiMainWindow.TCode e, ao final, sincronizar status no SharePoint — tudo sem sair do workbook.
-
-<br>
-
-<br>
-
----
-
-## 4. Mecanismo de Staging do Framework
-
-### 4.1 Visão geral
-
-O SPXLSAP opera em camadas para decidir quando rodar consultas diretamente na fonte e quando criar cópias temporárias em Excel. O orquestrador fwXLSPConn avalia cada SQL, identifica as origens envolvidas e escolhe entre rotas Direct-XL, Direct-SP ou Stage-First. O objetivo é garantir desempenho, preservar a integridade das listas SharePoint e permitir consultas federadas que misturam fontes heterogêneas.
-
-### 4.1.1 Contexto Stage-Update-Sync
-Utilizado quando comandos DML precisam combinar dados de múltiplas origens (por exemplo, UPDATE em uma lista SharePoint baseado em filtros de uma tabela Excel). O orquestrador fwXLSPConn cuida automaticamente dos estágios necessários para preservar consistência entre Excel e SharePoint.
-
-### 4.1.2 Etapas do pipeline
-- Staging: identifica as fontes envolvidas, executa SELECT em cada lista SharePoint e materializa cópias locais (XL_PAGESPHSP, XL_PAGESPSP) em planilhas ocultas.
-- Simulação: executa um SELECT rápido sobre as tabelas de staging para descobrir exatamente quais IDs serão afetados e guarda essa lista em memória.
-- Execução local: processa o comando DML original (por exemplo, UPDATE ... JOIN ...) apenas nas tabelas temporárias, evitando round-trips com o SharePoint.
-- Coleta: faz um SELECT * FROM [TabelaStage] WHERE [ID] IN (...) para capturar os registros alterados.
-- Sincronização: envia o conjunto resultante para SPUpdateRows, que aplica as mudanças na lista SharePoint em lotes seguros.
-
-### 4.1.3 Analogia operacional
-É como um chef: traz ingredientes para a bancada (staging), separa o que será usado (simulação), prepara os pratos (execução), monta os pedidos (coleta) e entrega aos clientes (sincronização). O desenvolvedor apenas dispara o comando SQL; o framework cuida do restante.
-
-### 4.2 Operações com SELECT
-Premissa: tanto o driver WSS (SharePoint) quanto o ACE (Excel) suportam SELECT com self-join e joins convencionais. O quadro abaixo mostra como o framework explora isso.
-
-### 4.2.1 Cenário 1 — Direct-XL (apenas tabelas Excel)
-Resumo rápido: consultas restritas a ListObjects residentes no workbook são encaminhadas diretamente para fwXLConn, sem qualquer staging. Ideais para dashboards e análises locais.
-
-**Passo a passo**
-Análise e roteamento. O orquestrador identifica que não há listas SharePoint na consulta (spTablesInQuery.Count = 0) e escolhe a estratégia Direct-XL.
-Preparação e tradução. O SQL é repassado para fwXLConn, que executa RewriteDataSourceNames para converter nomes lógicos (ex.: [Clientes]) em nomes físicos ([XL_Clientes]).
-Execução direta. fwXLConn abre o ACE em modo leitura (IMEX=1) e envia o SQL completo ao driver, que resolve qualquer combinação de self-join ou múltiplos joins.
-Retorno dos dados. O Recordset é convertido em array e devolvido ao chamador; nenhuma tabela de staging é criada.
-
-### 4.2.2 Cenário 2 — Direct-SP (uma única lista SharePoint)
-Resumo rápido: quando a consulta usa apenas uma lista SharePoint, inclusive em self-joins, fwSPConn trata tudo remotamente. É a rota mais rápida para inventários e auditorias direto no servidor.
-
-**Passo a passo**
-Análise e roteamento. spListsInQuery.Count <= 1 e hasXLTable = False, então o orquestrador ativa o Direct-SP.
-Execução remota. fwSPConn abre uma conexão WSS em modo leitura (IMEX=1) e executa o SQL original, aproveitando o suporte do driver a self-join.
-Retorno dos dados. O resultado é convertido para array e retornado; não há staging.
-
-### 4.2.3 Cenário 3 — Consultas federadas (combinação XL/SP)
-Resumo rápido: sempre que o SQL mistura múltiplas listas SharePoint ou combina SP com Excel, entra em ação o pipeline Stage-First. Ele baixa apenas as colunas necessárias, cria tabelas temporárias e executa o JOIN localmente.
-
-**Passo a passo**
-Análise e roteamento. Se spTablesInQuery.Count > 1 ou existe mistura SP + XL, o orquestrador ativa a estratégia de staging.
-Stage (download). Para cada lista SP, BuildStagingSqlFor gera um SELECT otimizado (apenas colunas usadas + ID). Os dados são materializados em tabelas ocultas no Excel.
-Execução local. O SQL original é traduzido (todos os nomes viram [XL_...]) e executado pela fwXLConn, que une dados locais e staged com alto desempenho.
-Retorno e limpeza. O resultado é entregue ao usuário e CleanupTempTables remove as tabelas temporárias.
-
-### 4.2.4 Diferenças principais
-- Direct-XL: todo o trabalho fica com o ACE/OLEDB (Excel).
-- Direct-SP: todo o trabalho fica com o WSS/OLEDB (SharePoint).
-- Stage-First: envolve WSS para download e ACE para processar o JOIN local.
-
-### 4.3 Operações com UPDATE
-Premissas: drivers ACE e WSS suportam self-join em UPDATE. Quando necessário, o framework reaproveita a infraestrutura de SELECT para planejar atualizações seguras.
-
-### 4.3.1 Cenário 1A — UPDATE Direct-XL (com ou sem self-join)
-Resumo rápido: usado quando todas as tabelas do UPDATE são Excel. Permite atualizar grandes volumes em lote com o ACE trabalhando diretamente no workbook.
-Análise inteligente. ExecuteUpdate detecta JOIN, confirma que todas as tabelas são do tipo XL e usa o caminho DirectExcelUpdatePath sem staging.
-Tradução. O SQL completo é repassado para fwXLConn, que traduz os nomes lógicos e abre a conexão em modo escrita (IMEX=0).
-Execução. O driver ACE processa o UPDATE JOIN, resolve o filtro e aplica os valores da cláusula SET diretamente.
-- Retorno. O número de linhas afetadas é capturado e devolvido ao orquestrador.
-
-### 4.3.2 Cenário 1B - UPDATE em SharePoint (estratégia iterativa)
-Resumo rápido: quando o UPDATE atinge lista SharePoint, o caminho atual prioriza robustez via estratégia iterativa (Consultar-Iterar-Executar), mantendo a operação controlada no servidor SP.
-Roteamento. ExecuteUpdate identifica alvo SP e encaminha para fwSPConn.SPUpdateRowsByQuery.
-Preparação. A rotina deriva e executa uma pré-consulta para identificar os IDs impactados.
-Execução. Para cada ID, aplica UPDATE simples no SharePoint com controle de progresso.
-- Retorno. O número de linhas afetadas retorna ao usuário.
-
-### 4.3.3 Cenário 2 — UPDATE com self-join em SharePoint (Consultar-Iterar-Executar)
-Resumo rápido: quando há maior risco no servidor SP, a estratégia SPUpdateRowsByQuery consulta previamente os IDs e executa atualizações individuais com barra de progresso.
-Delegação. ExecuteUpdate envia o SQL para SPUpdateRowsByQuery, que o quebra em tablesClause, setClause e whereClause.
-Pré-consulta de IDs. Um SELECT derivado recupera todos os IDs impactados via SPRunQuery.
-- Loop iterativo. Para cada ID, monta-se um UPDATE simples (sem alias), garantindo máxima compatibilidade.
-Finalização. O total de linhas atualizadas é retornado à RunQuery, que atualiza o status visual.
-
-### 4.3.4 Cenário 3 — UPDATE com JOIN e Staging (SP-XL ou SP-SP)
-Resumo rápido: combina Stage-Update-Sync. Baixa listas SP, alinha formatos, executa o UPDATE localmente e sincroniza apenas os registros afetados.
-- Stage. BuildStagingSqlFor baixa somente as colunas necessárias de cada lista SP e cria tabelas ocultas.
-Formatação. O framework aplica NumberFormat = "0" nas colunas de junção para evitar erros de tipo no ACE.
-- Update local. O UPDATE JOIN é traduzido para nomes físicos [XL_] e executado pelo ACE. Se a tabela alvo for SP, um SELECT adicional captura os IDs alterados.
-- Sync. Caso o alvo seja SharePoint, SPUpdateRows envia os dados atualizados em lotes seguros.
-
-### 4.3.5 Diferenças principais
-- Direct-XL: um único comando enviado ao driver ACE. Em SP, a implementação privilegia o modo iterativo para maior estabilidade.
-Self-join SP iterativo: divide em SELECT + múltiplos UPDATE simples, com barra de progresso.
-Stage-Update-Sync: mistura processamento local rápido com sincronização controlada no SharePoint.
-
-### 4.4 Operações com INSERT
-Premissa: o parser identifica automaticamente se o comando usa VALUES ou SELECT e delega para a estratégia correta.
-
-### 4.4.1 Cenário 1 — INSERT ... VALUES
-Resumo rápido: ideal para cadastros pontuais. O comando completo é enviado para o conector da origem alvo.
-Análise. ParseInsertSqlDetails encontra VALUES e identifica a tabela destino.
-Execução direta.
-Destino XL: fwXLConn abre conexão em modo escrita (IMEX=0) e executa o INSERT via ACE.
-Destino SP: fwSPConn abre o WSS e executa o comando diretamente.
-- Retorno. Quantidade de linhas inseridas retorna ao usuário.
-
-### 4.4.2 Cenário 2 — INSERT ... SELECT
-Resumo rápido: permite copiar dados entre fontes heterogêneas. O SELECT reutiliza todo o pipeline descrito em 3.2 antes de carregar o destino.
-Separação. O parser divide o comando nas partes INSERT (destino e colunas) e SELECT (origem dos dados).
-Execução da subconsulta. A subconsulta é tratada por ExecuteSelect, podendo usar Direct-XL, Direct-SP ou staging.
-- Carga no destino.
-Destino SP: fwSPConn.SPInsertRows insere linha a linha com barra de progresso.
-Destino XL: fwXLTable.XLLoadArray adiciona as linhas em lote.
-- Retorno. O total de registros inseridos é informado.
-
-### 4.5 Operações com DELETE
-Premissa: ParseDeleteSqlDetails identifica alvo e filtros; a escolha da estratégia evita limitações dos drivers com exclusões em massa.
-
-### 4.5.1 Cenário 1 — DELETE em tabelas Excel
-Resumo rápido: devido às restrições do ACE, o framework usa a estratégia "Consultar e Deletar" dentro do Excel, preservando filtros do usuário.
-Delegação. O orquestrador chama fwXLTable.DeleteRowsByQuery.
-Preparação. O estado dos filtros é salvo e, se necessário, cria-se uma coluna ID temporária.
-- Consulta de IDs. O DELETE vira SELECT [ID] ..., executado via fwXLConn em modo leitura.
-Exclusão programática. A tabela é percorrida de baixo para cima e linhas com IDs encontrados são removidas com ListRow.Delete (barra de progresso incluída).
-- Limpeza. Filtros e colunas temporárias são restaurados.
-
-### 4.5.2 Cenário 2 — DELETE em listas SharePoint
-Resumo rápido: usa a estratégia "Consultar-Iterar-Executar" para manter o SharePoint estável e informar progresso.
-Delegação. O SQL é enviado para fwSPConn.SPDeleteRowsByQuery.
-- Consulta. O comando é convertido em SELECT [ID] ... e executado via SPRunQuery em modo leitura.
-Iteração. Com a lista de IDs, abre-se uma conexão de escrita e executam-se DELETE simples por ID, atualizando a barra de progresso.
-- Retorno. Total de itens excluídos é devolvido ao usuário.
-
-<br>
-
-<br>
-
----
-
-## 5. Configuração e Instanciamento
-
-### 5.1 Descoberta automática de ListObjects
-O catálogo padrão do SPXLSAP é inteiramente dinâmico. A cada chamada de fwXLSPConn.Init, o helper CreateDynamifwXLTableCatalog(ActiveWorkbook) enumera todos os ListObjects existentes no workbook, aplica vbTextCompare para evitar conflitos de caixa e registra cada tabela com o mesmo nome visível na planilha.
-Nenhum dicionário precisa ser montado manualmente; basta nomear os ListObjects de forma consistente e eles estarão disponíveis nos comandos SQL.
-Alterações feitas nas planilhas (adição, renomeação ou exclusão de tabelas) são detectadas automaticamente sempre que o orquestrador é inicializado.
-Caso seja necessário criar aliases, renomeie o próprio ListObject ou utilize fwXLTable para expor colunas vistas pelo usuário antes de orquestrar consultas.
-
-### 5.2 Inicialização declarativa das listas SharePoint
-O orquestrador expõe um ParamArray para registrar as listas do SharePoint em trios NomeLógico, URL e GUID da lista Sharepoint, sem a criação de dicionários auxiliares. A assinatura é:
-vb orquestrador.InitSP Nome1, URL1, GUID1, Nome2, URL2, GUID2 ...
-
-**Exemplo prático:**
-
-`vb Dim orch As New fwXLSPConn
-orch.InitSP _ "FuncionariosSP", "https://empresa.sharepoint.com/sites/ti/Lists/FuncionariosSP", "181bdab9-68db-416a-b9c3-1ffea141ac67", _ "OrdensManutencao", "https://empresa.sharepoint.com/sites/ti/Lists/OrdensManutencao", "64f4041a-3ee2-4aa6-9d4e-a0d4e1dc3d46" `
-
-**Regras de uso:**
-Cada trio representa o nome lógico, a URL e o GUID interno da lista SharePoint que será referenciada no SQL.
-Informe quantos trios forem necessários; o orquestrador valida se a quantidade de argumentos é múltipla de 3 e ignora valores vazios.
-TraceOn continua disponível para inspecionar o catálogo final e conferir se todas as listas foram registradas corretamente.
-InitSP é a API pública recomendada para novos desenvolvimentos com assinatura declarativa em trios; Init permanece interno à classe.
-
-### 5.3 Boas práticas de inicialização
-Centralize variáveis de ambiente em pVariaveis e valide-as antes de chamar Init/InitSP.
-Reutilize instâncias de fwXLTable para navegar pelas linhas a processar nos fluxos UC (por exemplo, extração e processamento).
-Mantenha TraceOn apenas durante diagnóstico; em produção use os retornos execReport e OBSERVAÇÕES nas tabelas.
-Antes de automações SAP, invoque initSAP (ou fwSAPConn.Connect) e mantenha a sessão disponível para os wrappers GUI.
-
-<br>
-
-<br>
-
----
-
-## 6. Premissas e Sintaxe SQL
-
-### 6.1 Convenções gerais
-Nomes únicos. Cada fonte registrada no catálogo deve ter nome exclusivo para evitar sobreposições entre tabelas Excel e listas SharePoint.
-Uso de colchetes. Delimite sempre tabelas e campos com [ ], garantindo compatibilidade com o reescritor de nomes.
-Sem colchetes nos títulos físicos. ListObjects e listas não devem conter [ ou ] nos cabeçalhos originais.
-Cor curingas. Utilize * em cláusulas LIKE (ACE não aceita %).
-Separação de responsabilidades. Evite lógica de negócio em SQL; mantenha-a nos módulos VBA e use os comandos apenas para projeções e filtros.
-
-### 6.2 Regras específicas por origem
-Excel (ACE OLEDB). Converta textos numéricos com CDbl() quando necessário, salve o workbook antes de operações DML e prefira XLLoadArray para popular ListObjects.
-SharePoint. Garanta que SiteURL e ListID estejam corretos e que o usuário possua permissões de escrita. Use as colunas internas (ID, Title, etc.) respeitando SPKeyField.
-Tabelas de staging. O orquestrador cria planilhas ocultas (Staging_fwXLSPConn) para trabalhar offline; não as delete manualmente enquanto o processo estiver em execução.
-
-### 6.3 Recursos de validação e apoio
-fwHelpers oferece parsing e alinhamento automático (SqlAlignToAce, RewriteDataSourceNames, IsSelectSql), evitando divergências de dialeto. Em caso de falhas, consulte o trace do orquestrador e o relatório preenchido por FillExecReport, que indica SQL final, tempo e quantidade de linhas afetadas.
-
-<br>
-
-<br>
-
----
-
-## 7. Comandos Suportados e Exemplos Práticos
-
-### 7.1 Modelos de dados de referência
-
-**Lista SharePoint `[FuncionariosSP]`**
-
-| ID | Nome | Cargo | ID_Departamento | Salário |
-|---|---|---|---|---|
-| 1 | Ana Silva | Analista | 10 | 5000 |
-| 2 | Bruno Costa | Gerente | 10 | 8000 |
-| 3 | Carlos Dias | Analista | 20 | 5500 |
-| 4 | Diana Souza | Estagiária | 20 | 2000 |
-| 5 | Eva Mendes | Diretora | 30 | 15000 |
-
-**Tabela Excel `[Departamentos]`**
-
-| ID_Dep | NomeDepartamento | Localizacao |
-|---|---|---|
-| 10 | TI | Prédio A |
-| 20 | RH | Prédio B |
-| 30 | Diretoria | Prédio A |
-
-### 7.2 SELECT
-Os SELECTs aceitam JOIN, WHERE, GROUP BY, HAVING, ORDER BY e podem ser executados diretamente no SharePoint/Excel ou via staging automático. Use Result("Data") + XLLoadArray para carregar o retorno em um ListObject.
-
-**Exemplo 1 – Consulta simples (Direct-XL)**
-
-SELECT [NomeDepartamento], [Localizacao]
-FROM [Departamentos]
-WHERE [Localizacao] = 'Prédio A'
-- Resultado: retorna os departamentos de TI e Diretoria.
-
-**Exemplo 2 – Agregação (Direct-SP)**
-
-SELECT [ID_Departamento], AVG([Salario]) AS [MediaSalarial]
-FROM [FuncionariosSP]
-GROUP BY [ID_Departamento]
-HAVING AVG([Salario]) > 6000
-- Resultado: exibe a média salarial dos departamentos 10 e 30 diretamente no SharePoint.
-
-**Exemplo 3 – JOIN híbrido (Stage-First)**
-
-SELECT f.[Nome], f.[Cargo], d.[NomeDepartamento]
-FROM [FuncionariosSP] AS f
-INNER JOIN [Departamentos] AS d ON f.[ID_Departamento] = d.[ID_Dep]
-WHERE d.[Localizacao] = 'Prédio A'
-ORDER BY f.[Nome]
-- Resultado: o orquestrador baixa os dados de [FuncionariosSP], cria tabelas temporárias no Excel e processa o JOIN localmente, retornando Ana Silva, Bruno Costa e Eva Mendes.
-
-### 7.3 INSERT
-Suporta INSERT ... VALUES e INSERT ... SELECT, inclusive com JOIN entre fontes. Utilize rowsAffected para validar o processamento e, quando necessário, use fwXLTable.RangeRow("OBSERVAÇÕES") para registrar feedback ao usuário.
-
-**Exemplo 4 – Inserção direta em Excel**
-
-INSERT INTO [Departamentos] ([ID_Dep], [NomeDepartamento], [Localizacao])
-VALUES (40, 'Marketing', 'Prédio B')
-- Resultado: cria o departamento de Marketing no ListObject.
-
-**Exemplo 5 – Inserção com SELECT e JOIN**
-
-INSERT INTO [RelatorioCusto] ([Departamento], [CustoTotal])
-SELECT d.[NomeDepartamento], SUM(f.[Salario])
-FROM [FuncionariosSP] AS f
-INNER JOIN [Departamentos] AS d ON f.[ID_Departamento] = d.[ID_Dep]
-GROUP BY d.[NomeDepartamento]
-- Resultado: popula a tabela [RelatorioCusto] no Excel com o custo total por departamento, permitindo uso posterior por macros SAP.
-
-### 7.4 DELETE
-Aceita qualquer cláusula WHERE válida e respeita o estágio atual (Excel ou SharePoint).
-
-**Exemplo 6 – Exclusão em SharePoint**
-
-DELETE FROM [FuncionariosSP]
-WHERE [Cargo] = 'Estagiária'
-- Resultado: remove Diana Souza da lista SharePoint e retorna rowsAffected = 1.
-
-**Exemplo 7 – Exclusão em Excel**
-
-DELETE FROM [Departamentos]
-WHERE [ID_Dep] = 40
-- Resultado: elimina o departamento de Marketing previamente inserido.
-
-### 7.5 UPDATE
-Atualiza registros com base em WHERE. Quando o comando envolve múltiplas fontes, o framework aplica o pipeline Stage-Update-Sync para garantir consistência.
-
-**Exemplo 8 – Atualização em Excel**
-
-UPDATE [Departamentos]
-SET [Localizacao] = 'Sede'
-WHERE [ID_Dep] = 30
-- Resultado: define a localização da Diretoria como “Sede”.
-
-**Exemplo 9 – Atualização em SharePoint**
-
-UPDATE [FuncionariosSP]
-SET [Salario] = [Salario] * 1.10
-WHERE [ID_Departamento] = 10
-- Resultado: aumenta em 10% o salário dos funcionários do departamento de TI.
-
-<br>
-
-<br>
-
----
-
-## 8. Elementos Coadjuvantes
-Os itens a seguir não fazem parte do framework, porém foram implementados e introduzidos na solução para que fosse possível executar um caso de uso com necessidades recorrentes que demandam recursos como os que o framework é capaz de fornecer.
-Tratamento de filas SharePoint <-> Excel. Fluxos UC carregam listas SharePoint para ListObjects configurados; os analistas tratam os registros e o processamento sincroniza as alterações linha a linha.
-Preparação de dados para SAP. O framework aplica filtros, normaliza formatos (por exemplo, ToDateSAP) e escreve os dados já validados que serão consumidos por scripts SAP, evitando retrabalho na GUI.
-Automação de relatórios SAP. Rotinas UC combinadas à exportação ALV automatizam extrações, criam abas dedicadas e rotulam arquivos exportados conforme políticas da companhia.
-Execução assistida de transações. btnProcessar_Click e PERFIL mostram como chamar transações (TCode), alimentar campos e navegar em controles guiados pelos wrappers, mantendo o mesmo código-fonte independentemente da tela ativa.
-
-### 8.1 Guia de uso resiliente dos wrappers GUI (métodos booleanos)
-Para rotinas SAP com telas dinâmicas, priorize os métodos booleanos. Eles retornam `True/False` e evitam exceções desnecessárias no fluxo principal.
-
-**Padrão recomendado**
-
-- Use métodos booleanos quando a existência do elemento depende de contexto (menu, popup, coluna visível, nó de árvore).
-- Trate `False` com mensagem curta de status/log e siga para o fallback da rotina.
-- Reuse wrapper quando repetir a mesma ação em loop, evitando criação repetida do mesmo objeto.
-
-**Menus (classe `fwGuiMenu`, via factory `GuiMenu(...)`)**
+Para quem está usando, a ideia é simples: você chama `RunQuery` com um SQL. Por trás, o framework faz a leitura do comando, identifica as fontes envolvidas, ajusta nomes físicos, escolhe o conector adequado e devolve um resultado padronizado.
 
 ```vb
+Dim db As New fwXLSPConn
+Dim result As Object
 
-If Not w.GuiMenu("Linhas", "Visualizar as linhas ocultadas").SelectMenu() Then
-    Application.StatusBar = "Menu não disponível no contexto atual."
-End If
+db.InitSP _
+    "FuncionariosSP", "https://empresa.sharepoint.com/sites/rh", "00000000-0000-0000-0000-000000000000"
 
-If w.GuiMenu("Objetos eliminados", "Exibir").ExistsMenu() Then
-    Call w.GuiMenu("Objetos eliminados", "Exibir").SelectMenu()
-End If
-
+Set result = db.RunQuery( _
+    "SELECT [Nome], [Cargo] FROM [FuncionariosSP] WHERE [Cargo] = 'Analista'")
 ```
 
+O objetivo não é transformar VBA em um banco de dados completo. O objetivo é dar uma linguagem comum para consultas, cargas e sincronizações que aparecem o tempo todo em automações de escritório.
+
+### Camada Excel
+
+A classe [fwXLConn](src/fwXLConn.cls) é o motor de conexão com o Excel via ACE/OLEDB. Ela permite executar SQL contra o workbook, tratando detalhes como dialeto ACE, modo de leitura ou escrita, nomes físicos de tabelas e retorno de dados.
+
+Já a classe [fwXLTable](src/fwXLTable.cls) trabalha em um nível mais próximo do usuário. Ela encapsula `ListObject`, que é a tabela estruturada do Excel. Em vez de ficar procurando coluna por índice, calculando linha atual, tentando respeitar filtros e repetindo blocos de código para carregar arrays, você usa uma API própria para navegar e alterar a tabela.
+
+Com `fwXLTable`, uma tabela do Excel vira um objeto de processo. Você pode iniciar uma tabela pelo nome, obter a linha atual, ler e escrever valores por nome de coluna, contar linhas visíveis, adicionar colunas, carregar um resultado de consulta, limpar dados, aplicar filtros e ajustar formatos usados em integrações SAP.
+
 ```vb
+Dim tb As New fwXLTable
 
-Dim m As fwGuiMenu
-Set m = w.GuiMenu("Opções", "Configurações")
-If Not m.SelectMenu() Then
-    Application.StatusBar = "Falha ao selecionar Opções > Configurações."
-End If
+tb.Init "TabelaPedidos", "ID"
+tb.firstRow.Select
 
+Do
+    tb.SetCurrentRowValue "OBSERVACOES", "Linha em processamento"
+Loop While tb.ExistsNextRow(True)
 ```
 
-<br>
+Esse estilo é mais legível para quem ainda está aprendendo VBA, porque o código passa a falar a língua do processo: tabela, linha atual, coluna, valor, filtro, resultado. Ao mesmo tempo, continua sendo útil para desenvolvedores experientes, porque reduz duplicação e concentra os detalhes de manipulação do Excel em um lugar só.
 
-**Árvore (`fwGuiTree`)**
+### Camada SharePoint
+
+A classe [fwSPConn](src/fwSPConn.cls) cuida da conexão com listas SharePoint via ADODB/OLEDB. Ela conhece a URL do site, o identificador da lista, o campo chave usado nas atualizações e as rotas de leitura e escrita.
+
+O mais importante aqui é que o desenvolvedor não precisa espalhar detalhes de conexão SharePoint pela macro de negócio. As listas são registradas de forma declarativa em `fwXLSPConn.InitSP`, sempre em trios: nome lógico, URL e GUID da lista.
 
 ```vb
+Dim db As New fwXLSPConn
 
-If Not w.GuiTree("shell").SelectFirstNodeByItemText("STATUS", "REL", "&Hierarchy", False) Then
-    Application.StatusBar = "Nó não encontrado na árvore."
-End If
-
+db.InitSP _
+    "Solicitacoes", "https://empresa.sharepoint.com/sites/operacao", "11111111-1111-1111-1111-111111111111", _
+    "Historico", "https://empresa.sharepoint.com/sites/operacao", "22222222-2222-2222-2222-222222222222"
 ```
 
+Depois disso, o SQL passa a usar os nomes lógicos. Se a URL mudar, ou se a lista for substituída em ambiente de homologação, a regra do processo não precisa ser reescrita. Ajusta-se a configuração, não o fluxo inteiro.
+
+### Camada SAP GUI
+
+A classe [fwSAPConn](src/fwSAPConn.cls) abre ou reaproveita uma sessão SAP GUI. Ela concentra a lógica de conexão que normalmente ficaria repetida em várias macros: localizar o SAP Logon, escolher a conexão, pegar a sessão correta e devolver um objeto pronto para uso.
+
+Depois da conexão, [fwGuiMainWindow](src/fwGuiMainWindow.cls) representa a janela principal do SAP. Ela oferece métodos para abrir transações, enviar comandos, buscar objetos, ler a barra de status e criar wrappers mais específicos para menus, árvores e tabelas.
+
 ```vb
+Dim sap As New fwSAPConn
+Dim w As New fwGuiMainWindow
 
-If Not w.GuiTree("shell").SelectNodeByTechKey("000000000000123456") Then
-    Application.StatusBar = "TECH_KEY não localizada."
+If sap.Connect("PRD", 100, 0) Then
+    w.Init sap.Session
+    w.TCode "SE16N"
 End If
-
 ```
 
-<br>
+SAP GUI Scripting costuma gerar códigos muito dependentes de `findById`. Isso funciona, mas fica frágil quando a tela muda, quando existe popup, quando o mesmo controle aparece em outro container ou quando o desenvolvedor precisa adaptar a macro para outra transação. Os wrappers `fwGui*` não eliminam a necessidade de conhecer a tela SAP, mas deixam a automação mais organizada.
 
-**Tabela/ALV (`fwGuiTableControl`)**
+### Wrappers de elementos SAP
+
+O [fwGuiMenu](src/fwGuiMenu.cls) encapsula menus. Em vez de depender apenas de uma cadeia rígida de IDs, você pode trabalhar com objetos de menu e tratar o caso em que aquele item não está disponível no contexto atual.
+
+O [fwGuiTree](src/fwGuiTree.cls) encapsula árvores SAP. Ele ajuda a localizar nós, expandir estruturas, selecionar itens, ler textos, pressionar botões de árvore e navegar por hierarquias.
+
+O [fwGuiTableControl](src/fwGuiTableControl.cls) encapsula tabelas e grades do SAP. Ele ajuda a localizar colunas, ler células, verificar se uma célula existe, rolar tabela e trabalhar com controles que seriam bem trabalhosos se fossem tratados apenas por índice.
+
+Esses wrappers foram pensados para um código mais defensivo. Em tela SAP, nem sempre o elemento está visível, habilitado ou presente. Por isso, sempre que a classe oferecer um método que retorna `True` ou `False`, vale preferir esse formato quando a ausência do elemento for um cenário esperado.
 
 ```vb
+If Not w.GuiMenu("Sistema", "Status").SelectMenu() Then
+    Application.StatusBar = "Menu não disponível nesta tela."
+End If
+```
 
-Dim outText As String
-If w.GuiTable("tblSAPLCOVGTC_CONTROL").GetCellTextByColumnText("AUFNR", "1001421729", "VORNR", outText, True) Then
-    Debug.Print outText
+## O catálogo de dados
+
+Um dos conceitos mais importantes do SPXLSAP é o catálogo. O catálogo é a lista de fontes que o framework conhece naquele momento: tabelas do Excel e listas SharePoint registradas.
+
+Quando você inicializa o orquestrador, o framework consegue descobrir os `ListObjects` do workbook ativo. Isso significa que uma tabela chamada `Pedidos` no Excel pode ser referenciada como `[Pedidos]` em um SQL. Para listas SharePoint, você registra manualmente os nomes lógicos com `InitSP`.
+
+Esse desenho cria uma vantagem grande: o SQL do processo fica mais limpo. Ele fala de `[Pedidos]`, `[Solicitacoes]`, `[Historico]`, `[Usuarios]`, e não de detalhes físicos de conexão. O framework se encarrega de traduzir esses nomes para a origem correta.
+
+Para evitar confusão, vale seguir uma regra simples: use nomes claros e únicos. Se existe uma tabela Excel chamada `Solicitacoes` e uma lista SharePoint também chamada `Solicitacoes`, o leitor humano vai se perder, mesmo que o código consiga resolver parte do problema. Um bom nome de fonte já é metade da documentação do processo.
+
+## SQL como linguagem comum
+
+O SPXLSAP usa SQL como linguagem comum para consultar, inserir, atualizar e excluir dados. Isso é poderoso porque muitos processos corporativos se resumem a selecionar registros, aplicar filtros, cruzar tabelas, atualizar status e gerar um resultado.
+
+Os comandos suportados incluem:
+
+- `SELECT`, para consultar dados;
+- `INSERT`, para incluir registros;
+- `UPDATE`, para alterar registros;
+- `DELETE`, para excluir registros.
+
+O SQL pode envolver tabelas Excel, listas SharePoint ou uma combinação das duas. Quando a combinação exige cuidado, o framework usa staging para trazer dados temporariamente ao Excel e processar a operação de forma mais controlada.
+
+Algumas convenções ajudam a manter tudo previsível:
+
+- use colchetes em nomes de tabelas e campos, como `[Nome da Coluna]`;
+- evite caracteres especiais desnecessários nos nomes físicos das tabelas;
+- mantenha nomes de colunas estáveis, principalmente quando eles são usados em SQL ou SAP;
+- use `*` como curinga em `LIKE`, seguindo o comportamento esperado pelo ACE/OLEDB;
+- salve o workbook antes de operações de escrita que dependam do driver ACE;
+- prefira deixar regra de negócio complexa no VBA e usar SQL para seleção, junção, filtro e atualização de dados.
+
+Um exemplo simples, usando apenas Excel:
+
+```sql
+SELECT [ID], [Nome], [Status]
+FROM [Pedidos]
+WHERE [Status] = 'Pendente'
+ORDER BY [Nome]
+```
+
+Um exemplo misturando SharePoint e Excel:
+
+```sql
+SELECT s.[ID], s.[Solicitante], p.[Prioridade]
+FROM [SolicitacoesSP] AS s
+INNER JOIN [Parametros] AS p ON s.[Tipo] = p.[Tipo]
+WHERE p.[Ativo] = True
+```
+
+Para quem tem pouca experiência, esse modelo ensina uma ideia essencial: antes de automatizar uma tela SAP, organize bem os dados que vão entrar nela. Muitas falhas de automação não nascem no clique errado, mas em dados mal preparados.
+
+## O mecanismo de staging
+
+Staging é uma palavra técnica para uma ideia simples: antes de executar uma operação mais complexa, o framework cria uma área temporária de trabalho.
+
+Imagine que você quer atualizar uma lista SharePoint com base em uma tabela do Excel. O SharePoint está em uma origem, o Excel em outra, e os drivers nem sempre conseguem resolver todos os tipos de `JOIN` diretamente entre essas fontes. Em vez de forçar uma operação frágil, o SPXLSAP pode trazer os dados necessários para tabelas temporárias no Excel, executar a parte pesada localmente e depois sincronizar de volta apenas os registros afetados.
+
+Esse fluxo aparece principalmente em cenários híbridos:
+
+- consulta que cruza Excel com SharePoint;
+- consulta que envolve mais de uma lista SharePoint;
+- `UPDATE` em SharePoint baseado em filtros ou joins com outras fontes;
+- `INSERT ... SELECT` copiando dados entre origens diferentes.
+
+De forma resumida, o pipeline funciona assim:
+
+1. o framework lê o SQL e identifica as fontes envolvidas;
+2. as listas SharePoint necessárias são consultadas;
+3. os dados são materializados em tabelas temporárias no Excel;
+4. o comando é executado localmente quando isso for mais seguro ou mais compatível;
+5. se houver alteração em SharePoint, os registros afetados são sincronizados de volta;
+6. as tabelas temporárias são limpas ao final do processo.
+
+Para o desenvolvedor, a vantagem é escrever um comando de alto nível. Para o processo, a vantagem é reduzir round-trips desnecessários, controlar melhor os registros afetados e contornar limitações comuns dos drivers.
+
+## Como cada comando é tratado
+
+O desenvolvedor não precisa decorar todas as rotas internas para usar o SPXLSAP, mas entender a lógica geral ajuda bastante na hora de diagnosticar uma automação. O framework tenta escolher o caminho mais simples que resolve o problema, e só usa uma estratégia mais elaborada quando a consulta mistura origens ou quando o driver tem alguma limitação prática.
+
+### SELECT
+
+Quando o `SELECT` usa apenas tabelas do Excel, o caminho natural é o **Direct-XL**. O SQL é ajustado para o dialeto ACE/OLEDB e executado diretamente contra o workbook. Essa rota é boa para relatórios locais, filtros, cruzamentos entre `ListObjects` e preparação de dados antes de uma etapa SAP.
+
+Quando o `SELECT` usa apenas uma lista SharePoint, o caminho natural é o **Direct-SP**. Nesse caso, a consulta é enviada ao conector SharePoint e o resultado volta para o VBA como uma estrutura que pode ser carregada no Excel ou usada pela macro.
+
+Quando o `SELECT` mistura Excel e SharePoint, ou envolve mais de uma lista SharePoint, entra a rota **Stage-First**. O framework traz os dados necessários para tabelas temporárias no Excel, executa o cruzamento localmente e devolve o resultado final. Para quem escreve a macro, continua parecendo um único SQL; para o framework, foi uma pequena operação federada.
+
+### INSERT
+
+O `INSERT` pode ser usado de duas formas. Com `VALUES`, ele representa uma inclusão direta: uma linha nova vai para uma tabela Excel ou para uma lista SharePoint. Com `INSERT ... SELECT`, ele vira uma carga baseada em consulta, o que permite copiar dados entre origens diferentes.
+
+Esse segundo caso é especialmente útil em automações que preparam uma fila de trabalho. Por exemplo: consultar registros pendentes no SharePoint, cruzar com uma tabela de parâmetros no Excel e carregar o resultado em uma tabela local que será percorrida por uma rotina SAP.
+
+### UPDATE
+
+O `UPDATE` é tratado com mais cuidado porque altera dados existentes. Quando a atualização envolve apenas Excel, o framework tende a usar o caminho direto via ACE/OLEDB ou as rotas auxiliares de `fwXLTable`, conforme a necessidade do comando.
+
+Quando o alvo é SharePoint, a prioridade é controle. O framework pode consultar primeiro os registros afetados, aplicar atualizações de forma iterativa ou usar o fluxo Stage-Update-Sync quando a atualização depende de dados combinados entre origens. Essa abordagem evita mandar uma alteração grande e cega para a lista, além de facilitar o retorno de quantidade de linhas afetadas e mensagens de acompanhamento.
+
+### DELETE
+
+O `DELETE` também é uma operação sensível. No Excel, a exclusão precisa respeitar filtros, linhas visíveis e limitações do driver. Por isso, o framework pode transformar a exclusão em uma etapa de consulta dos IDs e depois remover as linhas correspondentes com controle programático.
+
+No SharePoint, a lógica é parecida: primeiro identifica-se o conjunto de registros que atende ao filtro; depois a exclusão é aplicada de forma controlada. Esse padrão é mais previsível para listas corporativas e combina melhor com processos que precisam registrar o que foi removido, ignorado ou bloqueado.
+
+Essa visão por comando mostra uma característica importante do SPXLSAP: ele não é só um atalho para executar SQL. Ele é uma camada de decisão que tenta escolher uma rota compatível com a origem, o tipo de operação e o risco envolvido.
+
+## Padrões de desenvolvimento
+
+O SPXLSAP fica mais fácil de usar quando algumas convenções são respeitadas desde o início do projeto. Elas não existem para engessar o desenvolvedor. Elas existem para que outro colega, ou você mesmo daqui a alguns meses, consiga entender o fluxo sem precisar desmontar a solução inteira.
+
+### Use tabelas estruturadas como contrato
+
+Sempre que possível, use `ListObject` no Excel em vez de intervalos soltos. Uma tabela estruturada tem nome, colunas, filtros e um corpo de dados reconhecível pelo framework. Isso torna o código mais resistente a inserção de linhas, mudança de tamanho da massa de dados e ajustes visuais na planilha.
+
+Uma tabela chamada `tblOrdens` com colunas `ID`, `ORDEM`, `STATUS` e `OBSERVACOES` é muito mais clara do que um intervalo `A1:K5000` manipulado por coordenadas.
+
+### Centralize parâmetros
+
+URLs de SharePoint, GUIDs de listas, nome de conexão SAP, mandante, número de sessão, variantes, flags de execução e caminhos de arquivo devem ficar centralizados. Em muitas soluções isso será uma aba de parâmetros, uma tabela `Variaveis` ou uma estrutura equivalente.
+
+O importante é evitar valores fixos escondidos no meio da macro. Quando o ambiente muda, a configuração muda junto. A regra de negócio deve permanecer o mais estável possível.
+
+### Escreva rotinas pequenas de processo
+
+Mesmo usando framework, uma automação pode ficar confusa se uma única macro fizer tudo. Prefira dividir o fluxo em etapas com nomes claros: carregar dados, validar linhas, conectar SAP, processar item, registrar retorno, sincronizar status.
+
+Essa divisão ajuda iniciantes a acompanhar o raciocínio e ajuda desenvolvedores experientes a testar e substituir partes do processo sem mexer em tudo.
+
+### Registre feedback para o usuário
+
+Automação corporativa geralmente roda sobre dados reais. O usuário precisa saber o que aconteceu. Uma coluna como `OBSERVACOES`, `STATUS_PROCESSAMENTO` ou `MENSAGEM` ajuda a registrar linha a linha se o item foi processado, ignorado, bloqueado, atualizado ou se falhou.
+
+Esse padrão aparece no  projeto [SPXLSAP Tools](https://github.com/rinaldops/spxlsap_tools) e deve ser reaproveitado em outras soluções. Quando o retorno fica na própria tabela, o usuário não depende de uma mensagem temporária que desaparece ao final da macro.
+
+### Prefira wrappers a chamadas soltas de SAP GUI
+
+`session.findById("wnd[0]/usr/...")` é inevitável em alguns momentos, mas não precisa dominar todo o código. Quando uma ação se repete, coloque-a atrás de um wrapper ou método mais claro. Isso reduz duplicação, facilita fallback e deixa a rotina mais legível.
+
+Em vez de uma sequência enorme de `findById`, procure expressar a intenção:
+
+```vb
+w.TCode "IW33"
+w.SetIfChangeable "ctxtCAUFVD-AUFNR", ordem
+w.Enter
+```
+
+Mesmo que por baixo ainda exista SAP GUI Scripting, o código de negócio fica mais próximo daquilo que o processo realmente faz.
+
+### Trate filtros e linhas visíveis com cuidado
+
+Em Excel, usuário filtra tabela o tempo todo. Uma rotina que processa todas as linhas quando o usuário esperava processar apenas as linhas visíveis pode causar erro operacional sério. Por isso, `fwXLTable` oferece recursos para contar e navegar por linhas visíveis.
+
+Antes de criar uma rotina de lote, decida explicitamente: ela processa tudo ou apenas o que está visível? Depois deixe isso claro no nome, na mensagem e no comportamento.
+
+## Fluxo recomendado para uma nova solução
+
+Um caminho seguro para criar uma automação com SPXLSAP é começar pequeno e ir adicionando camadas.
+
+Primeiro, defina a tabela principal do processo no Excel. Dê um nome claro ao `ListObject`, organize as colunas e inclua uma coluna de retorno, como `OBSERVACOES`. Essa tabela será o ponto de encontro entre o usuário, os dados e a macro.
+
+Depois, crie uma rotina simples usando `fwXLTable` para percorrer a tabela e escrever uma mensagem em cada linha. Isso valida se a base da automação está entendendo filtros, linhas e colunas.
+
+Em seguida, adicione a conexão SAP com `fwSAPConn` e teste apenas a abertura de uma transação. Não tente automatizar tudo de uma vez. Primeiro garanta que a sessão correta está sendo usada.
+
+Depois, encapsule os passos SAP principais em uma rotina pequena. Abra a transação, preencha um campo, pressione Enter, leia a barra de status. Quando isso estiver estável, inclua a navegação por tabela, menu ou árvore, usando os wrappers `fwGui*` quando fizer sentido.
+
+Se a solução também precisar de SharePoint, registre as listas com `InitSP` e comece por um `SELECT`. Depois teste `INSERT`, `UPDATE` ou `DELETE` em ambiente controlado. Operações de escrita devem sempre ser validadas com poucos registros antes de rodar em massa.
+
+Por fim, conecte as partes: os dados entram pelo Excel ou SharePoint, o SAP executa o trabalho, o retorno volta para a tabela e a sincronização atualiza a fonte corporativa.
+
+## Exemplos de uso
+
+### Consultar uma tabela Excel
+
+```vb
+Dim db As New fwXLSPConn
+Dim result As Object
+
+db.InitLocal
+
+Set result = db.RunQuery( _
+    "SELECT [ID], [Nome], [Status] FROM [Pedidos] WHERE [Status] = 'Pendente'")
+```
+
+Esse exemplo usa apenas o workbook. É uma boa porta de entrada para aprender o orquestrador sem envolver SharePoint ou SAP.
+
+### Carregar resultado em uma tabela
+
+```vb
+Dim destino As New fwXLTable
+
+destino.Init "Resultado"
+destino.LoadResult result
+```
+
+Aqui, a tabela `Resultado` recebe os dados retornados por uma consulta. Isso evita código manual para redimensionar range, escrever cabeçalho e preencher linhas.
+
+### Atualizar SharePoint a partir de SQL
+
+```vb
+Dim db As New fwXLSPConn
+Dim report As Variant
+
+db.InitSP _
+    "SolicitacoesSP", "https://empresa.sharepoint.com/sites/operacao", "11111111-1111-1111-1111-111111111111"
+
+Call db.RunQuery( _
+    "UPDATE [SolicitacoesSP] SET [Status] = 'Tratado' WHERE [ID] = 123", _
+    report)
+```
+
+O `execReport` pode ser usado para inspecionar informações de execução, como SQL final, tempo e quantidade de linhas afetadas, conforme a rota usada pelo framework.
+
+### Abrir uma transação SAP
+
+```vb
+Dim sap As New fwSAPConn
+Dim w As New fwGuiMainWindow
+
+If sap.Connect("PRD", 100, 0) Then
+    w.Init sap.Session
+    w.TCode "IW33"
+End If
+```
+
+Esse é o primeiro teste recomendado antes de automatizar qualquer tela. Se a conexão e a transação estiverem corretas, o restante do fluxo fica mais fácil de isolar.
+
+### Ler informação de uma tabela SAP
+
+```vb
+Dim tbl As fwGuiTableControl
+
+Set tbl = w.GuiTable("tblSAPLCOVGTC_CONTROL")
+
+If tbl.CellExists(0, "AUFNR") Then
+    Debug.Print tbl.CellText(0, "AUFNR")
 Else
-    Application.StatusBar = "Linha/coluna não encontrada na grade."
+    Application.StatusBar = "Célula não encontrada na tabela SAP."
 End If
-
 ```
 
-```vb
+O exemplo é propositalmente simples. Em telas reais, muitas vezes será melhor localizar colunas por nome técnico ou por texto de cabeçalho, dependendo do controle SAP disponível.
 
-If Not w.GuiTable("tblSAPLCOVGTC_CONTROL").SetCellTextByColumnText("AUFNR", "1001421729", "STEUS", "PS01", True) Then
-    Application.StatusBar = "Não foi possível atualizar a célula alvo."
-End If
+## Componentes do framework
 
-```
-
-<br>
-
-**Observação de eficiência**
-- `w.GuiMenu("MenuPai","OpcaoFilha")` pode ser chamado inline, mas em chamadas repetidas no mesmo bloco prefira armazenar a instância (`Set m = ...`) e reutilizar.
-
-**Quando usar `GuiTree/GuiTable(...)` vs `oGuiTree/oGuiTable`**
-- `GuiTree("idOuNome")` e `GuiTable("idOuNome")` são a opção padrão recomendada para código de processo: já devolvem o wrapper apontando para um controle específico.
-- `oGuiTree` e `oGuiTable` são wrappers compartilhados da janela; use quando quiser manter uma única instância e configurar `ID` ou `Name` manualmente antes das chamadas.
-
-```vb
-
-' Recomendado (direto e explícito)
-If Not w.GuiTree("shell").SelectNodeByTechKey("000000000000123456") Then
-    Application.StatusBar = "Nó não localizado."
-End If
-
-```
-
-```vb
-
-' Avançado (wrapper compartilhado com bind manual)
-With w.oGuiTree
-    .Name = "shell"
-    Call .SelectNodeByTechKey("000000000000123456")
-End With
-
-```
-
-<br>
-
-<br>
-
----
-
-## 9. Conclusão
-O SPXLSAP Tool unifica acesso a dados e automação SAP em uma única base VBA. O catálogo dinâmico, o pipeline Stage-Update-Sync, os conectores especializados e os wrappers de GUI permitem que desenvolvedores foquem em regras de negócio sem se preocupar com infraestrutura de conectividade. Com suporte completo a operações CRUD, rastreamento integrado e componentes prontos para manipular ListObjects e SAP GUI, o framework sustenta soluções de automação robustas, auditáveis e alinhadas às políticas corporativas.
-
-<br>
-
----
-
-## Anexo A. Inventário de Arquivos
-
-| Arquivo | Descrição |
+| Arquivo | Papel no framework |
 |---|---|
-| `src/fwXLSPConn.cls` | Orquestrador central; combina o catálogo dinâmico de ListObjects com as listas SharePoint declaradas e executa o pipeline Stage-Update-Sync. |
-| `src/fwXLConn.cls` | Motor OLEDB para Excel; traduz SQL para o dialeto ACE, controla conexões ADO e retorna dados ou linhas afetadas. |
-| `src/fwSPConn.cls` | Conector SharePoint via ACE/WSS; mantém SiteURL/ListID, campo chave e executa DML diretamente nas listas. |
-| `src/fwXLTable.cls` | Wrapper de ListObjects; oferece navegação, carga de arrays, manipulação estrutural e utilitários como RangeRow e QtdVisibleRows. |
-| `src/fwHelpers.cls` | Biblioteca de suporte; faz parsing de SQL, reescreve nomes físicos, gera catálogos dinâmicos e monta relatórios de execução. |
-| `src/fwSAPConn.cls` | Abre e mantém sessões SAP GUI; garante scripting habilitado, escolhe conexões e retorna GuiSession pronto. |
-| `src/fwGuiMainWindow.cls` | Encapsula janelas SAP (wnd[n]); executa TCodes, envia VKeys e expõe buscas generalistas por controles. |
-| `src/fwGuiMenu.cls` | Wrapper de menus SAP; resolve itens por texto, navega em hierarquias e executa comandos contextuais. |
-| `src/fwGuiTableControl.cls` | Abstrai controles do tipo tabela/ALV; provê rolagem, seleção e leitura de células para automações. |
-| `src/fwGuiTree.cls` | Manipula árvores SAP GUI; localiza nós, expande estruturas e interage com registros hierárquicos. |
-| `src/fwSapGuiApi.bas` | Declarações e helpers da API SAP GUI Scripting, facilitando chamadas late binding. |
-| `README.md` | Este documento consolida visão geral, arquitetura, comandos SQL e fluxos do framework. |
+| [src/fwXLSPConn.cls](src/fwXLSPConn.cls) | Orquestrador SQL multiorigem. Decide se uma operação vai para Excel, SharePoint ou staging. |
+| [src/fwXLConn.cls](src/fwXLConn.cls) | Conector Excel via ACE/OLEDB. Executa SQL contra tabelas do workbook. |
+| [src/fwSPConn.cls](src/fwSPConn.cls) | Conector SharePoint via ADODB/OLEDB. Executa leituras e escritas em listas. |
+| [src/fwXLTable.cls](src/fwXLTable.cls) | Wrapper de `ListObject`. Navega, carrega, filtra, atualiza e manipula tabelas estruturadas do Excel. |
+| [src/fwHelpers.cls](src/fwHelpers.cls) | Biblioteca de apoio. Faz parsing de SQL, normalização de nomes, relatórios e funções compartilhadas. |
+| [src/fwSAPConn.cls](src/fwSAPConn.cls) | Gerencia conexão com SAP GUI e devolve uma sessão pronta para automação. |
+| [src/fwGuiMainWindow.cls](src/fwGuiMainWindow.cls) | Representa a janela principal SAP. Abre transações, localiza controles e cria wrappers específicos. |
+| [src/fwGuiMenu.cls](src/fwGuiMenu.cls) | Encapsula menus SAP e facilita seleção defensiva de itens. |
+| [src/fwGuiTree.cls](src/fwGuiTree.cls) | Encapsula árvores SAP, nós, caminhos, seleções e ações contextuais. |
+| [src/fwGuiTableControl.cls](src/fwGuiTableControl.cls) | Encapsula tabelas e grades SAP, com apoio a leitura, seleção, colunas e rolagem. |
+| [src/fwSapGuiApi.bas](src/fwSapGuiApi.bas) | Módulo com apoio para SAP GUI Scripting. |
+| [VERSION](VERSION) | Versão atual publicada do framework. |
+| [CHANGELOG.md](CHANGELOG.md) | Histórico de mudanças relevantes. |
+
+## Requisitos de ambiente
+
+Para usar o SPXLSAP em uma solução real, normalmente você precisará de:
+
+- Microsoft Excel com suporte a VBA e macros habilitadas;
+- permissão para executar macros no arquivo da solução;
+- SAP GUI instalado, quando houver automação SAP;
+- SAP GUI Scripting habilitado no ambiente e permitido ao usuário;
+- acesso às conexões SAP usadas pela automação;
+- acesso às listas SharePoint usadas pelo processo;
+- permissão de leitura ou escrita nas fontes corporativas envolvidas;
+- referências ou late binding compatíveis com os objetos usados no projeto.
+
+O framework ajuda a organizar a automação, mas não substitui permissão de sistema. Se o usuário não pode alterar uma lista SharePoint manualmente, a macro também não deve conseguir. Se o ambiente bloqueia SAP GUI Scripting, a automação SAP precisa ser liberada antes.
+
+## Cuidados importantes
+
+Operações de escrita merecem respeito. `UPDATE`, `INSERT` e `DELETE` podem alterar dados reais em Excel ou SharePoint. Antes de rodar uma rotina em produção, teste com poucos registros, em ambiente de homologação ou com uma lista de teste. Use filtros de tabela para reduzir o lote inicial e acompanhe as mensagens linha a linha.
+
+Automação SAP também exige cuidado. Uma tela errada, uma variante incorreta ou uma sessão diferente da esperada pode levar o processo para outro caminho. Sempre valide conexão, mandante, sessão e transação antes de executar uma rotina em lote.
+
+Outro ponto importante é a manutenção dos IDs de tela. SAP GUI Scripting depende da estrutura da interface. Se a transação mudar, se o usuário estiver com layout diferente ou se surgir um popup inesperado, o código precisa tratar esse contexto. Os wrappers ajudam, mas não fazem milagre: uma boa automação continua precisando prever os desvios mais comuns.
+
+## Adaptabilidade
+
+O SPXLSAP não foi feito para um único processo. Ele foi feito para ser uma base de construção. O projeto [SPXLSAP Tools](https://github.com/rinaldops/spxlsap_tools) mostra uma planilha com Ribbon e exemplos de uso, mas o mesmo framework pode sustentar outras soluções, como:
+
+- carga e validação de dados antes de execução no SAP;
+- consulta de informações SAP e montagem de relatórios em Excel;
+- atualização controlada de listas SharePoint por usuários de negócio;
+- rotinas de saneamento de dados antes de upload em sistemas corporativos;
+- conciliações entre Excel, SharePoint e resultados extraídos do SAP;
+- assistentes de processamento com status por linha;
+- automações que reaproveitam uma mesma sessão SAP para vários itens de uma fila.
+
+A adaptabilidade vem do desenho em camadas. Se uma solução não usa SharePoint, ela pode usar apenas Excel e SAP. Se não usa SAP, pode usar apenas SQL entre Excel e SharePoint. Se precisa apenas de uma tabela Excel mais organizada, `fwXLTable` já resolve uma parte do problema. O framework não obriga todo projeto a usar tudo.
+
+## Para quem está aprendendo
+
+Se você é iniciante em VBA, não tente decorar todas as classes de uma vez. Comece pelo problema mais concreto.
+
+Se sua dificuldade é manipular tabela do Excel, abra [fwXLTable.cls](src/fwXLTable.cls) e procure exemplos de `Init`, `RangeRow`, `GetCurrentRowValue`, `SetCurrentRowValue`, `XLLoadArray` e filtros.
+
+Se sua dificuldade é conexão SAP, olhe [fwSAPConn.cls](src/fwSAPConn.cls) e [fwGuiMainWindow.cls](src/fwGuiMainWindow.cls). Teste primeiro abrir uma transação. Depois leia a barra de status. Depois preencha um campo.
+
+Se sua dificuldade é SharePoint, comece com `InitSP` e um `SELECT` simples. Só depois avance para escrita.
+
+Se sua dificuldade é entender a arquitetura, leia este README de cima para baixo e, em seguida, compare com o exemplo descrito no projeto [SPXLSAP Tools](https://github.com/rinaldops/spxlsap_tools). A documentação da ferramenta mostra uma aplicação concreta; este README mostra a base que permite construir aquela aplicação.
+
+## Para quem já desenvolve em VBA
+
+Se você já tem experiência, o ganho principal está em padronização e manutenção. O SPXLSAP reduz código repetido de conexão, navegação, carga de tabela e sincronização. Também cria uma linguagem comum entre projetos: tabelas estruturadas, catálogo, `RunQuery`, wrappers SAP, mensagens por linha e parâmetros centralizados.
+
+Isso facilita revisão de código, passagem de conhecimento e evolução incremental. Quando uma melhoria é feita em um conector ou wrapper do framework, outras soluções podem se beneficiar sem que cada automação precise ser reescrita do zero.
+
+## Como contribuir ou evoluir
+
+Ao evoluir o framework, mantenha a mesma preocupação que motivou sua criação: facilitar a vida de quem vai construir em cima dele. Uma nova função deve ter nome claro, responsabilidade bem definida e comportamento previsível. Se a função resolve um detalhe técnico difícil, tente esconder a complexidade atrás de uma API simples.
+
+Também vale preservar a separação entre framework e solução. Código genérico, reaproveitável e independente de processo pertence ao SPXLSAP. Código que conhece uma transação específica, uma lista específica, uma aba de negócio ou uma regra operacional deve ficar no projeto consumidor.
+
+Antes de publicar mudanças, confira:
+
+- se os nomes continuam consistentes com o restante do framework;
+- se a mudança não quebra chamadas existentes sem necessidade;
+- se a documentação ou exemplos precisam ser atualizados;
+- se os arquivos exportados de VBA continuam em encoding compatível com o ambiente;
+- se o [CHANGELOG.md](CHANGELOG.md) deve registrar a alteração.
+
+## Fechamento
+
+O SPXLSAP é uma base para criar automações mais organizadas em um ambiente onde Excel, SharePoint e SAP precisam trabalhar juntos. Ele não elimina a necessidade de conhecer o processo, testar com cuidado e entender os sistemas envolvidos. Mas reduz bastante o código repetitivo, cria um caminho mais claro para quem está aprendendo e oferece pontos de extensão para quem precisa construir soluções mais robustas.
+
+Use o framework como uma caixa de ferramentas: comece com a peça que resolve o problema de hoje, entenda como ela se encaixa nas demais e evolua sua solução por etapas. Esse é o caminho mais leve para sair de uma macro isolada e chegar a uma automação corporativa mais confiável.
