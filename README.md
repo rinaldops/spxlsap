@@ -1,7 +1,5 @@
 # SPXLSAP
 
-Versão do framework: **1.0.0**
-
 O **SPXLSAP** é um framework VBA para construir automações corporativas que precisam conversar com **Excel**, **SharePoint** e **SAP GUI** sem transformar cada novo projeto em uma coleção de macros soltas, difíceis de entender e mais difíceis ainda de manter.
 
 A proposta é bem prática: deixar o desenvolvedor escrever a regra de negócio com menos atrito. Em vez de recomeçar do zero sempre que precisar ler uma tabela do Excel, consultar uma lista SharePoint, atualizar registros em lote, navegar por uma tela do SAP, localizar uma tabela ALV ou controlar uma sessão SAP aberta, o framework oferece classes prontas para esses trabalhos comuns. Assim, o código do projeto fica mais focado no processo que está sendo automatizado e menos na infraestrutura repetitiva que todo mundo acaba reescrevendo.
